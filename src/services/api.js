@@ -58,4 +58,61 @@ getHistoricalData: async (years = 10) => {
     return response.json();
   }
 
+
+};
+
+export const watchlistAPI = {
+  getWatchlist: async (userId) => {
+    const response = await fetch(`${API_URL}/watchlist`, {
+      headers: {
+        'x-user-id': userId
+      }
+    });
+    if (!response.ok) throw new Error('Failed to fetch watchlist');
+    return response.json();
+  },
+
+  getWatchlistDetails: async (userId) => {
+    const response = await fetch(`${API_URL}/watchlist/details`, {
+      headers: {
+        'x-user-id': userId
+      }
+    });
+    if (!response.ok) throw new Error('Failed to fetch watchlist details');
+    return response.json();
+  },
+
+  addToWatchlist: async (userId, symbol) => {
+    const response = await fetch(`${API_URL}/watchlist/add`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': userId
+      },
+      body: JSON.stringify({ symbol })
+    });
+    if (!response.ok) throw new Error('Failed to add to watchlist');
+    return response.json();
+  },
+
+  removeFromWatchlist: async (userId, symbol) => {
+    const response = await fetch(`${API_URL}/watchlist/${symbol}`, {
+      method: 'DELETE',
+      headers: {
+        'x-user-id': userId
+      }
+    });
+    if (!response.ok) throw new Error('Failed to remove from watchlist');
+    return response.json();
+  },
+
+  checkWatchlist: async (userId, symbol) => {
+    const response = await fetch(`${API_URL}/watchlist/check/${symbol}`, {
+      headers: {
+        'x-user-id': userId
+      }
+    });
+    if (!response.ok) throw new Error('Failed to check watchlist');
+    return response.json();
+  }
 };

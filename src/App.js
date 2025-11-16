@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, DollarSign, Activity, BarChart3, AlertCircle, ChevronDown, ChevronUp, RefreshCw, Loader, LogIn, LogOut, User } from 'lucide-react';
-import { stockAPI, marketAPI } from './services/api';
+import { TrendingUp, TrendingDown, DollarSign, Activity, BarChart3, AlertCircle, ChevronDown, ChevronUp, RefreshCw, Loader, LogIn, LogOut, User, Star } from 'lucide-react';
+import { stockAPI, marketAPI, watchlistAPI } from './services/api';
 import { useAuth } from './context/AuthContext';
 import Auth from './components/Auth';
 import StockChart from './components/StockChart';
 import Education from './components/Education';
 import MarketDashboard from './components/MarketDashboard';
 import SchedulerAdmin from './components/SchedulerAdmin';
+import Watchlist from './components/Watchlist';
 import './App.css';
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
   const [selectedTimeframe, setSelectedTimeframe] = useState('daily');
 const [liveIndices, setLiveIndices] = useState(null);  
 const [indicesLoading, setIndicesLoading] = useState(false);  
+const [inWatchlist, setInWatchlist] = useState(false); 
 
   const fetchStockData = async (symbol) => {
     setLoading(true);
@@ -77,13 +79,52 @@ const fetchLiveIndices = async () => {
   }
 };
 
+// ← ADD THESE NEW FUNCTIONS HERE
+const checkWatchlist = async (symbol) => {
+  if (!isAuthenticated || !user) {
+    setInWatchlist(false);
+    return;
+  }
+  
+  try {
+    const result = await watchlistAPI.checkWatchlist(user.id, symbol);
+    setInWatchlist(result.inWatchlist);
+  } catch (err) {
+    console.error('Failed to check watchlist:', err);
+    setInWatchlist(false);
+  }
+};
 
-  useEffect(() => {
-    if (activeTab === 'company') {
-      fetchStockData(selectedStock);
-      fetchPriceData(selectedStock, selectedTimeframe);
+const toggleWatchlist = async () => {
+  if (!isAuthenticated || !user) {
+    alert('Please log in to use the watchlist feature');
+    setShowAuth(true);
+    return;
+  }
+
+  try {
+    if (inWatchlist) {
+      await watchlistAPI.removeFromWatchlist(user.id, selectedStock);
+      setInWatchlist(false);
+      alert(`${selectedStock} removed from watchlist`);
+    } else {
+      await watchlistAPI.addToWatchlist(user.id, selectedStock);
+      setInWatchlist(true);
+      alert(`${selectedStock} added to watchlist`);
     }
-  }, [selectedStock, activeTab, selectedTimeframe]);
+  } catch (err) {
+    console.error('Failed to toggle watchlist:', err);
+    alert('Failed to update watchlist');
+  }
+};
+
+ useEffect(() => {
+  if (activeTab === 'company') {
+    fetchStockData(selectedStock);
+    fetchPriceData(selectedStock, selectedTimeframe);
+    checkWatchlist(selectedStock);
+  }
+}, [selectedStock, activeTab, selectedTimeframe, user]);
 
   useEffect(() => {
   if (activeTab === 'market') {
@@ -199,7 +240,7 @@ const fetchLiveIndices = async () => {
 
       <div style={{ maxWidth: '1200px', margin: '2rem auto', padding: '0 2rem' }}>
         <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid #334155', marginBottom: '2rem' }}>
-          {['market', 'company', 'education', 'settings'].map(tab => (
+          {['market', 'company', 'watchlist', 'education', 'settings'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -462,9 +503,31 @@ const fetchLiveIndices = async () => {
             )}
 
             {stockData && (
-              <div>
-                <div style={{ background: 'linear-gradient(to right, #2563eb, #1e40af)', borderRadius: '0.75rem', padding: '2rem', marginBottom: '2rem' }}>
-                  <h2 style={{ fontSize: '2rem', margin: '0 0 1rem 0' }}>{stockData.Name}</h2>
+  <div>
+    <div style={{ background: 'linear-gradient(to right, #2563eb, #1e40af)', borderRadius: '0.75rem', padding: '2rem', marginBottom: '2rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
+        <h2 style={{ fontSize: '2rem', margin: 0 }}>{stockData.Name}</h2>
+        <button
+          onClick={toggleWatchlist}
+          style={{
+            padding: '0.75rem',
+            background: inWatchlist ? 'rgba(251, 191, 36, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+            border: inWatchlist ? '1px solid #fbbf24' : '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: '0.5rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            color: 'white',
+            fontSize: '0.875rem',
+            fontWeight: '600'
+          }}
+        >
+          <Star size={20} color={inWatchlist ? '#fbbf24' : 'white'} fill={inWatchlist ? '#fbbf24' : 'none'} />
+          {inWatchlist ? 'In Watchlist' : 'Add to Watchlist'}
+        </button>
+      </div>
+      
                   <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
                     <div>
                       <div style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>Market Cap</div>
@@ -541,6 +604,21 @@ const fetchLiveIndices = async () => {
             )}
           </div>
         )}
+
+
+{activeTab === 'watchlist' && (
+  <div>
+    <Watchlist 
+      user={user} 
+      onStockClick={(symbol) => {
+        setSelectedStock(symbol);
+        setActiveTab('company');
+      }}
+    />
+  </div>
+)}
+
+
 
         {activeTab === 'education' && (
           <Education fredData={fredData} />
