@@ -58,7 +58,13 @@ function App() {
     return `${(parseFloat(value) * 100).toFixed(2)}%`;
   };
 
-  const popularStocks = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'NVDA'];
+  const stockCategories = {
+    'Tech Giants': ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'NVDA'],
+    'Finance': ['JPM', 'BAC', 'GS', 'WFC', 'MS', 'V'],
+    'Healthcare': ['JNJ', 'UNH', 'PFE', 'ABBV', 'TMO', 'MRK'],
+    'Consumer': ['WMT', 'HD', 'NKE', 'SBUX', 'MCD', 'DIS'],
+    'Energy': ['XOM', 'CVX', 'COP', 'SLB', 'EOG', 'PSX']
+  };
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%)', color: 'white', fontFamily: 'system-ui' }}>
@@ -103,43 +109,60 @@ function App() {
 
         {activeTab === 'company' && (
           <div>
-            <div style={{ background: 'rgba(30, 41, 59, 0.5)', borderRadius: '0.5rem', padding: '1rem', marginBottom: '2rem', border: '1px solid #334155' }}>
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                <span>Quick Select:</span>
-                {popularStocks.map(symbol => (
-                  <button
-                    key={symbol}
-                    onClick={() => setSelectedStock(symbol)}
-                    style={{
-                      padding: '0.5rem 1rem',
-                      borderRadius: '0.25rem',
-                      border: 'none',
-                      background: selectedStock === symbol ? '#2563eb' : '#334155',
-                      color: 'white',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {symbol}
-                  </button>
-                ))}
+            <div style={{ background: 'rgba(30, 41, 59, 0.5)', borderRadius: '0.5rem', padding: '1.5rem', marginBottom: '2rem', border: '1px solid #334155' }}>
+              {Object.entries(stockCategories).map(([category, stocks]) => (
+                <div key={category} style={{ marginBottom: '1.5rem' }}>
+                  <div style={{ fontSize: '0.875rem', color: '#60a5fa', marginBottom: '0.75rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    {category}
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    {stocks.map(symbol => (
+                      <button
+                        key={symbol}
+                        onClick={() => setSelectedStock(symbol)}
+                        style={{
+                          padding: '0.5rem 1rem',
+                          borderRadius: '0.25rem',
+                          border: selectedStock === symbol ? '2px solid #60a5fa' : '1px solid #475569',
+                          background: selectedStock === symbol ? '#2563eb' : '#334155',
+                          color: 'white',
+                          cursor: 'pointer',
+                          fontSize: '0.875rem',
+                          fontWeight: selectedStock === symbol ? '600' : '400',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        {symbol}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid #475569' }}>
                 <button
                   onClick={() => fetchStockData(selectedStock)}
                   disabled={loading}
                   style={{
-                    padding: '0.5rem 1rem',
-                    borderRadius: '0.25rem',
+                    padding: '0.75rem 1.5rem',
+                    borderRadius: '0.375rem',
                     border: 'none',
-                    background: '#059669',
+                    background: loading ? '#6b7280' : '#059669',
                     color: 'white',
                     cursor: loading ? 'not-allowed' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.5rem'
+                    gap: '0.5rem',
+                    fontWeight: '600',
+                    fontSize: '0.875rem'
                   }}
                 >
                   {loading ? <Loader size={16} className="spin" /> : <RefreshCw size={16} />}
-                  Refresh
+                  {loading ? 'Loading...' : 'Refresh Data'}
                 </button>
+                <div style={{ color: '#94a3b8', fontSize: '0.875rem' }}>
+                  Selected: <span style={{ color: '#60a5fa', fontWeight: '600', fontSize: '1rem' }}>{selectedStock}</span>
+                </div>
               </div>
             </div>
 
@@ -153,7 +176,7 @@ function App() {
               <div>
                 <div style={{ background: 'linear-gradient(to right, #2563eb, #1e40af)', borderRadius: '0.75rem', padding: '2rem', marginBottom: '2rem' }}>
                   <h2 style={{ fontSize: '2rem', margin: '0 0 1rem 0' }}>{stockData.Name}</h2>
-                  <div style={{ display: 'flex', gap: '2rem' }}>
+                  <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
                     <div>
                       <div style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>Market Cap</div>
                       <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{formatMarketCap(stockData.MarketCapitalization)}</div>
@@ -162,17 +185,26 @@ function App() {
                       <div style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>P/E Ratio</div>
                       <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stockData.PERatio}</div>
                     </div>
+                    <div>
+                      <div style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>Symbol</div>
+                      <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stockData.Symbol}</div>
+                    </div>
                   </div>
                 </div>
 
-                <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem' }}>Key Metrics</h3>
+                <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <DollarSign size={24} color="#fbbf24" />
+                  Key Financial Metrics
+                </h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
-                  <MetricCard label="EPS" value={`$${stockData.EPS}`} />
-                  <MetricCard label="Revenue Growth" value={formatPercent(stockData.QuarterlyRevenueGrowthYOY || 0)} />
+                  <MetricCard label="EPS (Earnings Per Share)" value={`$${stockData.EPS}`} />
+                  <MetricCard label="Revenue Growth (YoY)" value={formatPercent(stockData.QuarterlyRevenueGrowthYOY || 0)} />
                   <MetricCard label="Profit Margin" value={formatPercent(stockData.ProfitMargin || 0)} />
-                  <MetricCard label="Debt-to-Equity" value={stockData.DebtToEquity} />
-                  <MetricCard label="ROE" value={formatPercent(stockData.ReturnOnEquityTTM || 0)} />
+                  <MetricCard label="Debt-to-Equity Ratio" value={stockData.DebtToEquity} />
+                  <MetricCard label="ROE (Return on Equity)" value={formatPercent(stockData.ReturnOnEquityTTM || 0)} />
                   <MetricCard label="Dividend Yield" value={formatPercent(stockData.DividendYield || 0)} />
+                  <MetricCard label="Current Ratio" value={stockData.CurrentRatio} />
+                  <MetricCard label="Book Value" value={`$${stockData.BookValue || 'N/A'}`} />
                 </div>
               </div>
             )}
