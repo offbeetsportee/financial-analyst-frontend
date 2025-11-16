@@ -14,6 +14,15 @@ export const stockAPI = {
     const response = await fetch(`${API_URL}/stocks`);
     if (!response.ok) throw new Error('Failed to fetch stocks');
     return response.json();
+  },
+
+  getPriceData: async (symbol, timeframe) => {
+    const response = await fetch(`${API_URL}/stocks/${symbol}/prices/${timeframe}`);
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch price data');
+    }
+    return response.json();
   }
 };
 
