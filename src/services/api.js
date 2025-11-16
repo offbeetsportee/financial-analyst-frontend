@@ -37,5 +37,17 @@ export const marketAPI = {
     const response = await fetch(`${API_URL}/market/indicators`);
     if (!response.ok) throw new Error('Failed to fetch market indicators');
     return response.json();
+  },
+
+getHistoricalData: async (years = 10) => {
+    const response = await fetch(`${API_URL}/market/fred-historical?years=${years}`);
+    if (!response.ok) throw new Error('Failed to fetch historical data');
+    return response.json();
+  },
+
+  getMarketEvents: async () => {
+    const response = await fetch(`${API_URL}/market/events`);
+    if (!response.ok) throw new Error('Failed to fetch market events');
+    return response.json();
   }
 };

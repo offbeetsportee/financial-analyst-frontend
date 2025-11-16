@@ -5,6 +5,7 @@ import { useAuth } from './context/AuthContext';
 import Auth from './components/Auth';
 import StockChart from './components/StockChart';
 import Education from './components/Education';
+import MarketDashboard from './components/MarketDashboard';
 import './App.css';
 
 function App() {
@@ -203,6 +204,10 @@ function App() {
 
         {activeTab === 'market' && (
           <div>
+
+{/* Market Dashboard - NEW */}
+    <MarketDashboard currentIndicators={fredData} />
+
             {/* Federal Reserve & Economic Indicators */}
             <div style={{ background: 'rgba(30, 41, 59, 0.5)', backdropFilter: 'blur(10px)', borderRadius: '0.75rem', padding: '1.5rem', border: '1px solid #334155', marginBottom: '2rem' }}>
               <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
