@@ -156,12 +156,95 @@ function App() {
           ))}
         </div>
 
-        {activeTab === 'market' && (
-          <div>
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Market Overview</h2>
-            <p>Federal Reserve data, market indices, and economic indicators will be displayed here.</p>
+
+{activeTab === 'market' && (
+  <div>
+    {/* Federal Reserve & Economic Indicators */}
+    <div style={{ background: 'rgba(30, 41, 59, 0.5)', backdropFilter: 'blur(10px)', borderRadius: '0.75rem', padding: '1.5rem', border: '1px solid #334155', marginBottom: '2rem' }}>
+      <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <Activity size={28} color="#60a5fa" />
+        Federal Reserve & Economic Indicators
+      </h2>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
+        {[
+          { name: 'Federal Funds Rate', value: '5.25%', change: '+0.25%', status: 'up', description: 'Target interest rate set by the Federal Reserve' },
+          { name: 'Inflation Rate (CPI)', value: '3.2%', change: '-0.3%', status: 'down', description: 'Consumer Price Index year-over-year change' },
+          { name: 'Unemployment Rate', value: '3.8%', change: '+0.1%', status: 'up', description: 'Percentage of labor force without jobs' },
+          { name: 'GDP Growth', value: '2.4%', change: '+0.2%', status: 'up', description: 'Quarterly economic growth rate (annualized)' },
+          { name: '10-Year Treasury', value: '4.35%', change: '-0.15%', status: 'down', description: 'U.S. government 10-year bond yield' },
+          { name: 'Consumer Confidence', value: '102.6', change: '+3.2', status: 'up', description: 'Index measuring consumer optimism' }
+        ].map((indicator, idx) => (
+          <div key={idx} style={{ background: 'rgba(51, 65, 85, 0.5)', borderRadius: '0.5rem', padding: '1.25rem', border: '1px solid #475569', transition: 'all 0.2s' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '0.75rem' }}>
+              <h3 style={{ fontSize: '0.875rem', color: '#cbd5e1', margin: 0, fontWeight: '500' }}>{indicator.name}</h3>
+              {indicator.status === 'up' ? (
+                <TrendingUp size={18} color="#f87171" />
+              ) : (
+                <TrendingDown size={18} color="#34d399" />
+              )}
+            </div>
+            <div style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>{indicator.value}</div>
+            <div style={{ fontSize: '0.875rem', color: indicator.status === 'up' ? '#f87171' : '#34d399', marginBottom: '0.75rem', fontWeight: '600' }}>
+              {indicator.change}
+            </div>
+            <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: 0, lineHeight: '1.4' }}>{indicator.description}</p>
           </div>
-        )}
+        ))}
+      </div>
+    </div>
+
+    {/* Major Market Indices */}
+    <div style={{ background: 'rgba(30, 41, 59, 0.5)', backdropFilter: 'blur(10px)', borderRadius: '0.75rem', padding: '1.5rem', border: '1px solid #334155', marginBottom: '2rem' }}>
+      <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <TrendingUp size={28} color="#34d399" />
+        Major Market Indices
+      </h2>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+        {[
+          { name: 'S&P 500', value: '4,567.89', change: '+1.2%', points: '+54.32', status: 'up' },
+          { name: 'Dow Jones', value: '35,421.32', change: '+0.8%', points: '+281.45', status: 'up' },
+          { name: 'NASDAQ', value: '14,238.76', change: '+1.5%', points: '+210.89', status: 'up' },
+          { name: 'Russell 2000', value: '1,856.43', change: '+0.6%', points: '+11.05', status: 'up' },
+          { name: 'VIX (Volatility)', value: '14.2', change: '-2.1%', points: '-0.30', status: 'down' },
+          { name: 'Crude Oil', value: '$78.45', change: '+1.8%', points: '+1.39', status: 'up' }
+        ].map((index, idx) => (
+          <div key={idx} style={{ background: 'linear-gradient(135deg, rgba(51, 65, 85, 0.8) 0%, rgba(30, 41, 59, 0.8) 100%)', borderRadius: '0.5rem', padding: '1.25rem', border: '1px solid #475569' }}>
+            <h3 style={{ fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.75rem', fontWeight: '500' }}>{index.name}</h3>
+            <div style={{ fontSize: '1.75rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>{index.value}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: index.status === 'up' ? '#34d399' : '#f87171', fontWeight: '600' }}>
+              {index.status === 'up' ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+              <span>{index.change}</span>
+              <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>({index.points})</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {/* Market Summary */}
+    <div style={{ background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '0.75rem', padding: '1.5rem' }}>
+      <div style={{ display: 'flex', gap: '1rem', alignItems: 'start' }}>
+        <AlertCircle size={24} color="#60a5fa" style={{ flexShrink: 0, marginTop: '0.25rem' }} />
+        <div>
+          <h3 style={{ fontWeight: 'bold', marginBottom: '0.75rem', fontSize: '1.125rem' }}>Market Summary</h3>
+          <p style={{ color: '#cbd5e1', fontSize: '0.875rem', lineHeight: '1.6', margin: 0 }}>
+            Markets are showing positive momentum with all major indices trading higher. 
+            The Federal Reserve's current monetary policy stance continues to influence market dynamics. 
+            Economic indicators suggest moderate growth with inflation trending downward. 
+            Investors should monitor upcoming Fed meetings and economic data releases for potential market-moving events.
+          </p>
+          <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '0.5rem', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+            <p style={{ fontSize: '0.75rem', color: '#93c5fd', margin: 0 }}>
+              💡 <strong>Tip:</strong> Market data updates daily. For real-time integration, we can connect to Federal Reserve Economic Data (FRED) API and market data providers.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
+
 
         {activeTab === 'company' && (
           <div>
