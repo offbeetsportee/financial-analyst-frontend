@@ -49,5 +49,13 @@ getHistoricalData: async (years = 10) => {
     const response = await fetch(`${API_URL}/market/events`);
     if (!response.ok) throw new Error('Failed to fetch market events');
     return response.json();
+  },
+
+// NEW - Get live market indices
+  getLiveIndices: async () => {
+    const response = await fetch(`${API_URL}/market/indices/key`);
+    if (!response.ok) throw new Error('Failed to fetch live market indices');
+    return response.json();
   }
+
 };

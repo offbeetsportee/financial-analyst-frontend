@@ -23,6 +23,8 @@ function App() {
   const [priceData, setPriceData] = useState(null);
   const [priceLoading, setPriceLoading] = useState(false);
   const [selectedTimeframe, setSelectedTimeframe] = useState('daily');
+const [liveIndices, setLiveIndices] = useState(null);  
+const [indicesLoading, setIndicesLoading] = useState(false);  
 
   const fetchStockData = async (symbol) => {
     setLoading(true);
@@ -63,6 +65,19 @@ function App() {
     }
   };
 
+const fetchLiveIndices = async () => {
+  setIndicesLoading(true);
+  try {
+    const data = await marketAPI.getLiveIndices();
+    setLiveIndices(data);
+  } catch (err) {
+    console.error('Failed to fetch live indices:', err);
+  } finally {
+    setIndicesLoading(false);
+  }
+};
+
+
   useEffect(() => {
     if (activeTab === 'company') {
       fetchStockData(selectedStock);
@@ -71,10 +86,11 @@ function App() {
   }, [selectedStock, activeTab, selectedTimeframe]);
 
   useEffect(() => {
-    if (activeTab === 'market' && !fredData) {
-      fetchFREDData();
-    }
-  }, [activeTab]);
+  if (activeTab === 'market') {
+    if (!fredData) fetchFREDData();
+    if (!liveIndices) fetchLiveIndices();
+  }
+}, [activeTab]);
 
   const getDemoStockData = (symbol) => {
     return {
@@ -285,33 +301,77 @@ function App() {
               </div>
             </div>
 
-            {/* Major Market Indices */}
-            <div style={{ background: 'rgba(30, 41, 59, 0.5)', backdropFilter: 'blur(10px)', borderRadius: '0.75rem', padding: '1.5rem', border: '1px solid #334155', marginBottom: '2rem' }}>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <TrendingUp size={28} color="#34d399" />
-                Major Market Indices
-              </h2>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-                {[
-                  { name: 'S&P 500', value: '4,567.89', change: '+1.2%', points: '+54.32', status: 'up' },
-                  { name: 'Dow Jones', value: '35,421.32', change: '+0.8%', points: '+281.45', status: 'up' },
-                  { name: 'NASDAQ', value: '14,238.76', change: '+1.5%', points: '+210.89', status: 'up' },
-                  { name: 'Russell 2000', value: '1,856.43', change: '+0.6%', points: '+11.05', status: 'up' },
-                  { name: 'VIX (Volatility)', value: '14.2', change: '-2.1%', points: '-0.30', status: 'down' },
-                  { name: 'Crude Oil', value: '$78.45', change: '+1.8%', points: '+1.39', status: 'up' }
-                ].map((index, idx) => (
-                  <div key={idx} style={{ background: 'linear-gradient(135deg, rgba(51, 65, 85, 0.8) 0%, rgba(30, 41, 59, 0.8) 100%)', borderRadius: '0.5rem', padding: '1.25rem', border: '1px solid #475569' }}>
-                    <h3 style={{ fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.75rem', fontWeight: '500' }}>{index.name}</h3>
-                    <div style={{ fontSize: '1.75rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>{index.value}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: index.status === 'up' ? '#34d399' : '#f87171', fontWeight: '600' }}>
-                      {index.status === 'up' ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-                      <span>{index.change}</span>
-                      <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>({index.points})</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+
+{/* Major Market Indices */}
+<div style={{ background: 'rgba(30, 41, 59, 0.5)', backdropFilter: 'blur(10px)', borderRadius: '0.75rem', padding: '1.5rem', border: '1px solid #334155', marginBottom: '2rem' }}>
+  <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+    <TrendingUp size={28} color="#34d399" />
+    Major Market Indices
+    <button
+      onClick={fetchLiveIndices}
+      disabled={indicesLoading}
+      style={{
+        marginLeft: 'auto',
+        padding: '0.5rem 1rem',
+        background: '#059669',
+        border: 'none',
+        borderRadius: '0.5rem',
+        color: 'white',
+        cursor: indicesLoading ? 'not-allowed' : 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.5rem',
+        fontSize: '0.875rem'
+      }}
+    >
+      {indicesLoading ? <Loader size={16} className="spin" /> : <RefreshCw size={16} />}
+      Refresh
+    </button>
+  </h2>
+  
+  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+    {indicesLoading ? (
+      <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'center', padding: '3rem' }}>
+        <Loader size={48} color="#60a5fa" className="spin" />
+      </div>
+    ) : liveIndices && Object.keys(liveIndices).length > 0 ? (
+      Object.values(liveIndices).map((index, idx) => (
+        <div key={idx} style={{ background: 'linear-gradient(135deg, rgba(51, 65, 85, 0.8) 0%, rgba(30, 41, 59, 0.8) 100%)', borderRadius: '0.5rem', padding: '1.25rem', border: '1px solid #475569' }}>
+          <h3 style={{ fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.75rem', fontWeight: '500' }}>{index.name}</h3>
+          <div style={{ fontSize: '1.75rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>${index.value}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: index.status === 'up' ? '#34d399' : '#f87171', fontWeight: '600' }}>
+            {index.status === 'up' ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+            <span>{parseFloat(index.change) > 0 ? '+' : ''}{parseFloat(index.change).toFixed(2)}%</span>
+            <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>({index.points})</span>
+          </div>
+          <p style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '0.5rem', margin: 0 }}>
+            Updated: {index.lastUpdated || 'Live'}
+          </p>
+        </div>
+      ))
+    ) : (
+      // Fallback to static data if API fails
+      [
+        { name: 'S&P 500', value: '4,567.89', change: '+1.2%', points: '+54.32', status: 'up' },
+        { name: 'Dow Jones', value: '35,421.32', change: '+0.8%', points: '+281.45', status: 'up' },
+        { name: 'NASDAQ', value: '14,238.76', change: '+1.5%', points: '+210.89', status: 'up' }
+      ].map((index, idx) => (
+        <div key={idx} style={{ background: 'linear-gradient(135deg, rgba(51, 65, 85, 0.8) 0%, rgba(30, 41, 59, 0.8) 100%)', borderRadius: '0.5rem', padding: '1.25rem', border: '1px solid #475569' }}>
+          <h3 style={{ fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.75rem', fontWeight: '500' }}>{index.name}</h3>
+          <div style={{ fontSize: '1.75rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>{index.value}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: index.status === 'up' ? '#34d399' : '#f87171', fontWeight: '600' }}>
+            {index.status === 'up' ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+            <span>{index.change}</span>
+            <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>({index.points})</span>
+          </div>
+          <p style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '0.5rem', margin: 0 }}>
+            Static fallback data
+          </p>
+        </div>
+      ))
+    )}
+  </div>
+</div>
 
             {/* Market Summary */}
             <div style={{ background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '0.75rem', padding: '1.5rem' }}>
