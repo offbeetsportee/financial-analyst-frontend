@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, DollarSign, Activity, BarChart3, AlertCircle, ChevronDown, ChevronUp, RefreshCw, Loader } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Activity, BarChart3, AlertCircle, ChevronDown, ChevronUp, RefreshCw, Loader, LogIn, LogOut, User } from 'lucide-react';
 import { stockAPI } from './services/api';
+import { useAuth } from './context/AuthContext';
+import Auth from './components/Auth';
 import './App.css';
 
 function App() {
+  const { user, logout, isAuthenticated } = useAuth();
+  const [showAuth, setShowAuth] = useState(false);
   const [activeTab, setActiveTab] = useState('market');
   const [selectedStock, setSelectedStock] = useState('AAPL');
   const [expandedSection, setExpandedSection] = useState(null);
@@ -69,11 +73,63 @@ function App() {
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%)', color: 'white', fontFamily: 'system-ui' }}>
       <div style={{ background: 'rgba(30, 41, 59, 0.5)', borderBottom: '1px solid #334155', padding: '1rem 2rem' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <BarChart3 size={32} color="#60a5fa" />
-          <div>
-            <h1 style={{ margin: 0, fontSize: '1.5rem' }}>InvestorIQ</h1>
-            <p style={{ margin: 0, fontSize: '0.75rem', color: '#94a3b8' }}>Real-time Market Analysis</p>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <BarChart3 size={32} color="#60a5fa" />
+            <div>
+              <h1 style={{ margin: 0, fontSize: '1.5rem' }}>InvestorIQ</h1>
+              <p style={{ margin: 0, fontSize: '0.75rem', color: '#94a3b8' }}>Real-time Market Analysis</p>
+            </div>
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            {isAuthenticated ? (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '0.5rem', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+                  <User size={18} color="#60a5fa" />
+                  <span style={{ fontSize: '0.875rem', color: '#60a5fa' }}>{user?.email}</span>
+                </div>
+                <button
+                  onClick={logout}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    background: '#475569',
+                    border: 'none',
+                    borderRadius: '0.5rem',
+                    color: 'white',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    fontSize: '0.875rem',
+                    fontWeight: '500'
+                  }}
+                >
+                  <LogOut size={16} />
+                  Logout
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setShowAuth(true)}
+                style={{
+                  padding: '0.5rem 1.5rem',
+                  background: '#2563eb',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  color: 'white',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  fontSize: '0.875rem',
+                  fontWeight: '600'
+                }}
+              >
+                <LogIn size={16} />
+                Login / Sign Up
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -218,6 +274,8 @@ function App() {
           </div>
         )}
       </div>
+
+      {showAuth && <Auth onClose={() => setShowAuth(false)} />}
     </div>
   );
 }
