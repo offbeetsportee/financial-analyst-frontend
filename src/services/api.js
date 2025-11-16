@@ -18,6 +18,12 @@ export const stockAPI = {
 };
 
 export const marketAPI = {
+  getFREDIndicators: async () => {
+    const response = await fetch(`${API_URL}/market/fred-indicators`);
+    if (!response.ok) throw new Error('Failed to fetch FRED indicators');
+    return response.json();
+  },
+
   getIndicators: async () => {
     const response = await fetch(`${API_URL}/market/indicators`);
     if (!response.ok) throw new Error('Failed to fetch market indicators');
