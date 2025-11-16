@@ -31,40 +31,46 @@ const MarketDashboard = ({ currentIndicators }) => {
 
   // Investor implications based on current values
   const getInvestorGuidance = (indicator, value) => {
-    const guidance = {
-      'Federal Funds Rate': {
-        high: { threshold: 4, action: 'defensive', message: 'High rates make borrowing expensive. Consider defensive stocks, bonds, and dividend-paying companies.' },
-        low: { threshold: 2, action: 'aggressive', message: 'Low rates encourage growth. Good time for growth stocks, real estate, and riskier investments.' },
-        rising: { message: 'Rising rates typically hurt growth stocks. Pivot to value stocks and shorter-duration bonds.' },
-        falling: { message: 'Falling rates boost stocks, especially tech and growth. Good time to increase equity exposure.' }
-      },
-      'Inflation Rate (CPI)': {
-        high: { threshold: 3, action: 'inflation-hedge', message: 'High inflation erodes purchasing power. Consider commodities, real estate, TIPS, and inflation-resistant stocks.' },
-        low: { threshold: 2, action: 'growth', message: 'Low inflation is ideal for growth. Stocks and long-term bonds perform well.' },
-        rising: { message: 'Rising inflation pressures the Fed to raise rates. Avoid long-duration bonds, favor commodities and value stocks.' },
-        falling: { message: 'Falling inflation allows Fed to ease policy. Bullish for bonds and growth stocks.' }
-      },
-      'Unemployment Rate': {
-        high: { threshold: 6, action: 'defensive', message: 'High unemployment signals recession risk. Stay defensive with consumer staples, utilities, and cash.' },
-        low: { threshold: 4, action: 'cyclical', message: 'Low unemployment shows economic strength. Good for cyclical stocks and consumer discretionary.' },
-        rising: { message: 'Rising unemployment warns of economic slowdown. Reduce risk, increase cash positions.' },
-        falling: { message: 'Falling unemployment indicates recovery. Increase exposure to cyclical and growth stocks.' }
-      },
-      'GDP Growth': {
-        high: { threshold: 3, action: 'cyclical', message: 'Strong GDP growth favors cyclical stocks, industrials, and small caps.' },
-        low: { threshold: 1, action: 'defensive', message: 'Weak GDP growth suggests caution. Favor defensive sectors and quality companies.' },
-        negative: { message: 'Negative GDP signals recession. Hold cash, defensive stocks, and consider inverse ETFs.' }
-      },
-      '10-Year Treasury': {
-        high: { threshold: 4, action: 'bonds-attractive', message: 'High yields make bonds competitive with stocks. Consider fixed income allocation.' },
-        low: { threshold: 2, action: 'stocks-favored', message: 'Low yields push investors to stocks for returns. Bullish for equities.' },
-        rising: { message: 'Rising yields pressure stock valuations, especially growth stocks. Favor value and dividend stocks.' },
-        falling: { message: 'Falling yields boost stock valuations. Excellent for growth and tech stocks.' }
-      }
-    };
-
-    return guidance[indicator] || {};
+  const guidance = {
+    'Federal Funds Rate': {
+      high: { threshold: 4, action: 'defensive', message: 'High rates make borrowing expensive. Consider defensive stocks, bonds, and dividend-paying companies.' },
+      low: { threshold: 2, action: 'aggressive', message: 'Low rates encourage growth. Good time for growth stocks, real estate, and riskier investments.' },
+      rising: { message: 'Rising rates typically hurt growth stocks. Pivot to value stocks and shorter-duration bonds.' },
+      falling: { message: 'Falling rates boost stocks, especially tech and growth. Good time to increase equity exposure.' }
+    },
+    'Inflation Rate (CPI)': {
+      high: { threshold: 3, action: 'inflation-hedge', message: 'High inflation erodes purchasing power. Consider commodities, real estate, TIPS, and inflation-resistant stocks.' },
+      low: { threshold: 2, action: 'growth', message: 'Low inflation is ideal for growth. Stocks and long-term bonds perform well.' },
+      rising: { message: 'Rising inflation pressures the Fed to raise rates. Avoid long-duration bonds, favor commodities and value stocks.' },
+      falling: { message: 'Falling inflation allows Fed to ease policy. Bullish for bonds and growth stocks.' }
+    },
+    'Unemployment Rate': {
+      high: { threshold: 6, action: 'defensive', message: 'High unemployment signals recession risk. Stay defensive with consumer staples, utilities, and cash.' },
+      low: { threshold: 4, action: 'cyclical', message: 'Low unemployment shows economic strength. Good for cyclical stocks and consumer discretionary.' },
+      rising: { message: 'Rising unemployment warns of economic slowdown. Reduce risk, increase cash positions.' },
+      falling: { message: 'Falling unemployment indicates recovery. Increase exposure to cyclical and growth stocks.' }
+    },
+    'GDP Growth': {
+      high: { threshold: 3, action: 'cyclical', message: 'Strong GDP growth favors cyclical stocks, industrials, and small caps.' },
+      low: { threshold: 1, action: 'defensive', message: 'Weak GDP growth suggests caution. Favor defensive sectors and quality companies.' },
+      negative: { message: 'Negative GDP signals recession. Hold cash, defensive stocks, and consider inverse ETFs.' }
+    },
+    '10-Year Treasury': {
+      high: { threshold: 4, action: 'bonds-attractive', message: 'High yields make bonds competitive with stocks. Consider fixed income allocation.' },
+      low: { threshold: 2, action: 'stocks-favored', message: 'Low yields push investors to stocks for returns. Bullish for equities.' },
+      rising: { message: 'Rising yields pressure stock valuations, especially growth stocks. Favor value and dividend stocks.' },
+      falling: { message: 'Falling yields boost stock valuations. Excellent for growth and tech stocks.' }
+    },
+    'Consumer Confidence': {
+      high: { threshold: 90, action: 'consumer-stocks', message: 'High confidence drives spending. Excellent for consumer discretionary, retail, and travel stocks.' },
+      low: { threshold: 60, action: 'defensive', message: 'Low confidence suggests consumers will cut spending. Favor staples and defensive sectors.' },
+      rising: { message: 'Rising confidence boosts consumer spending. Good for retail, restaurants, and discretionary stocks.' },
+      falling: { message: 'Falling confidence warns of spending cuts. Reduce exposure to consumer discretionary, favor necessities.' }
+    }
   };
+
+  return guidance[indicator] || {};
+};
 
   const getIndicatorStatus = (indicator, currentValue) => {
     const current = currentIndicators?.[indicator];
@@ -131,14 +137,23 @@ const MarketDashboard = ({ currentIndicators }) => {
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
-      const relevantEvents = events.filter(e => e.date === data.date);
+      
+      // Find events that match this date (with some tolerance)
+      const dataDate = new Date(data.date);
+      const relevantEvents = events.filter(e => {
+        const eventDate = new Date(e.date);
+        // Match if within 15 days
+        const diffDays = Math.abs((dataDate - eventDate) / (1000 * 60 * 60 * 24));
+        return diffDays <= 15;
+      });
       
       return (
         <div style={{
-          background: 'rgba(15, 23, 42, 0.95)',
+          background: 'rgba(15, 23, 42, 0.98)',
           border: '1px solid #334155',
           borderRadius: '0.5rem',
-          padding: '0.75rem'
+          padding: '0.75rem',
+          maxWidth: '300px'
         }}>
           <p style={{ margin: 0, fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>
             {data.displayDate}
@@ -149,11 +164,11 @@ const MarketDashboard = ({ currentIndicators }) => {
           {relevantEvents.length > 0 && (
             <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid #334155' }}>
               {relevantEvents.map((event, idx) => (
-                <div key={idx} style={{ marginTop: idx > 0 ? '0.25rem' : 0 }}>
-                  <p style={{ margin: 0, fontSize: '0.65rem', color: '#fbbf24', fontWeight: 'bold' }}>
+                <div key={idx} style={{ marginTop: idx > 0 ? '0.5rem' : 0 }}>
+                  <p style={{ margin: 0, fontSize: '0.7rem', color: '#fbbf24', fontWeight: 'bold' }}>
                     📌 {event.title}
                   </p>
-                  <p style={{ margin: 0, fontSize: '0.65rem', color: '#cbd5e1' }}>
+                  <p style={{ margin: 0, fontSize: '0.65rem', color: '#cbd5e1', marginTop: '0.25rem', lineHeight: '1.4' }}>
                     {event.description}
                   </p>
                 </div>
