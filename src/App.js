@@ -94,13 +94,23 @@ function App() {
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%)', color: 'white', fontFamily: 'system-ui' }}>
       <div style={{ background: 'rgba(30, 41, 59, 0.5)', borderBottom: '1px solid #334155', padding: '1rem 2rem' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <BarChart3 size={32} color="#60a5fa" />
-            <div>
-              <h1 style={{ margin: 0, fontSize: '1.5rem' }}>InvestorIQ</h1>
-              <p style={{ margin: 0, fontSize: '0.75rem', color: '#94a3b8' }}>Real-time Market Analysis</p>
-            </div>
-          </div>
+          
+
+<div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+  <img 
+    src="/images/offbeet-logo.jpeg" 
+    alt="Offbeet Tech Logo" 
+    style={{ width: '48px', height: '48px', objectFit: 'contain' }}
+  />
+  <div>
+    <h1 style={{ margin: 0, fontSize: '1.5rem' }}>InvestorIQ</h1>
+    <p style={{ margin: 0, fontSize: '0.75rem', color: '#94a3b8' }}>
+      by <span style={{ color: '#60a5fa', fontWeight: '600' }}>Offbeet Media and Tech Inc.</span>
+    </p>
+  </div>
+</div>
+
+
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             {isAuthenticated ? (
@@ -871,10 +881,147 @@ function App() {
 
 </div>
 
-      {showAuth && <Auth onClose={() => setShowAuth(false)} />}
+
+   {showAuth && <Auth onClose={() => setShowAuth(false)} />}
+
+      {/* Footer */}
+      <footer style={{ 
+        background: 'rgba(15, 23, 42, 0.95)', 
+        borderTop: '1px solid #334155', 
+        marginTop: '4rem',
+        padding: '2rem 2rem 1.5rem'
+      }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem', marginBottom: '2rem' }}>
+            {/* Company Info */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                <img 
+                  src="/images/offbeet-logo.jpeg" 
+                  alt="Offbeet Tech Logo" 
+                  style={{ width: '40px', height: '40px', objectFit: 'contain' }}
+                />
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 'bold' }}>Offbeet Tech</h3>
+                  <p style={{ margin: 0, fontSize: '0.75rem', color: '#94a3b8' }}>Media and Technology</p>
+                </div>
+              </div>
+              <p style={{ color: '#cbd5e1', fontSize: '0.875rem', lineHeight: '1.6', margin: '0 0 1rem 0' }}>
+                Empowering investors with professional-grade financial analysis tools and real-time market data.
+              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#60a5fa', fontSize: '0.875rem' }}>
+                <span>✉️</span>
+                <a href="mailto:info@sportee.us" style={{ color: '#60a5fa', textDecoration: 'none' }}>
+                  info@sportee.us
+                </a>
+              </div>
+            </div>
+
+            {/* Product */}
+            <div>
+              <h4 style={{ fontSize: '0.875rem', fontWeight: 'bold', color: '#cbd5e1', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Product
+              </h4>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                {[
+                  { name: 'Market Overview', onClick: () => setActiveTab('market') },
+                  { name: 'Company Analysis', onClick: () => setActiveTab('company') },
+                  { name: 'Education Center', onClick: () => setActiveTab('education') }
+                ].map((item, idx) => (
+                  <li key={idx} style={{ marginBottom: '0.5rem' }}>
+                    <button
+                      onClick={item.onClick}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#94a3b8',
+                        fontSize: '0.875rem',
+                        cursor: 'pointer',
+                        padding: 0,
+                        textAlign: 'left'
+                      }}
+                      onMouseEnter={(e) => e.target.style.color = '#60a5fa'}
+                      onMouseLeave={(e) => e.target.style.color = '#94a3b8'}
+                    >
+                      {item.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Resources */}
+            <div>
+              <h4 style={{ fontSize: '0.875rem', fontWeight: 'bold', color: '#cbd5e1', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Resources
+              </h4>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, color: '#94a3b8', fontSize: '0.875rem' }}>
+                <li style={{ marginBottom: '0.5rem' }}>
+                  <a href="https://fred.stlouisfed.org/" target="_blank" rel="noopener noreferrer" style={{ color: '#94a3b8', textDecoration: 'none' }}>
+                    Federal Reserve Data
+                  </a>
+                </li>
+                <li style={{ marginBottom: '0.5rem' }}>
+                  <a href="https://www.alphavantage.co/" target="_blank" rel="noopener noreferrer" style={{ color: '#94a3b8', textDecoration: 'none' }}>
+                    Alpha Vantage API
+                  </a>
+                </li>
+                <li style={{ marginBottom: '0.5rem' }}>Real-time Market Data</li>
+                <li style={{ marginBottom: '0.5rem' }}>Investment Education</li>
+              </ul>
+            </div>
+
+            {/* Legal */}
+            <div>
+              <h4 style={{ fontSize: '0.875rem', fontWeight: 'bold', color: '#cbd5e1', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Legal
+              </h4>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, color: '#94a3b8', fontSize: '0.875rem' }}>
+                <li style={{ marginBottom: '0.5rem' }}>Privacy Policy</li>
+                <li style={{ marginBottom: '0.5rem' }}>Terms of Service</li>
+                <li style={{ marginBottom: '0.5rem' }}>Disclaimer</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Bottom Bar */}
+          <div style={{ 
+            borderTop: '1px solid #334155', 
+            paddingTop: '1.5rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '1rem'
+          }}>
+            <p style={{ margin: 0, color: '#64748b', fontSize: '0.75rem' }}>
+              © {new Date().getFullYear()} Offbeet Media and Tech Inc. All rights reserved.
+            </p>
+            <p style={{ margin: 0, color: '#64748b', fontSize: '0.75rem' }}>
+              Built with ❤️ for informed investors
+            </p>
+          </div>
+
+          {/* Disclaimer */}
+          <div style={{ 
+            marginTop: '1.5rem', 
+            padding: '1rem', 
+            background: 'rgba(239, 68, 68, 0.1)', 
+            borderRadius: '0.5rem',
+            border: '1px solid rgba(239, 68, 68, 0.2)'
+          }}>
+            <p style={{ margin: 0, color: '#fca5a5', fontSize: '0.75rem', lineHeight: '1.5' }}>
+              <strong>Investment Disclaimer:</strong> This tool is for informational and educational purposes only. 
+              It does not constitute financial advice. Always conduct your own research and consult with a qualified 
+              financial advisor before making investment decisions. Past performance does not guarantee future results.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
+
 
 function MetricCard({ label, value }) {
   return (
