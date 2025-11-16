@@ -6,6 +6,7 @@ import Auth from './components/Auth';
 import StockChart from './components/StockChart';
 import Education from './components/Education';
 import MarketDashboard from './components/MarketDashboard';
+import SchedulerAdmin from './components/SchedulerAdmin';
 import './App.css';
 
 function App() {
@@ -182,7 +183,7 @@ function App() {
 
       <div style={{ maxWidth: '1200px', margin: '2rem auto', padding: '0 2rem' }}>
         <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid #334155', marginBottom: '2rem' }}>
-          {['market', 'company', 'education'].map(tab => (
+          {['market', 'company', 'education', 'settings'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -204,12 +205,11 @@ function App() {
 
         {activeTab === 'market' && (
           <div>
-
-{/* Market Dashboard - NEW */}
-    <MarketDashboard currentIndicators={fredData} />
+            {/* Market Dashboard */}
+            <MarketDashboard currentIndicators={fredData} />
 
             {/* Federal Reserve & Economic Indicators */}
-            <div style={{ background: 'rgba(30, 41, 59, 0.5)', backdropFilter: 'blur(10px)', borderRadius: '0.75rem', padding: '1.5rem', border: '1px solid #334155', marginBottom: '2rem' }}>
+            <div style={{ background: 'rgba(30, 41, 59, 0.5)', backdropFilter: 'blur(10px)', borderRadius: '0.75rem', padding: '1.5rem', border: '1px solid #334155', marginBottom: '2rem', marginTop: '2rem' }}>
               <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Activity size={28} color="#60a5fa" />
                 Federal Reserve & Economic Indicators
@@ -482,13 +482,16 @@ function App() {
           </div>
         )}
 
-   {activeTab === 'education' && (
-  <Education fredData={fredData} />
-)}
-      
+        {activeTab === 'education' && (
+          <Education fredData={fredData} />
+        )}
 
-
-</div>
+        {activeTab === 'settings' && (
+          <div>
+            <SchedulerAdmin />
+          </div>
+        )}
+      </div>
 
       {showAuth && <Auth onClose={() => setShowAuth(false)} />}
 
