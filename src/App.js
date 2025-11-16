@@ -4,6 +4,7 @@ import { stockAPI, marketAPI } from './services/api';
 import { useAuth } from './context/AuthContext';
 import Auth from './components/Auth';
 import StockChart from './components/StockChart';
+import Education from './components/Education';
 import './App.css';
 
 function App() {
@@ -476,22 +477,13 @@ function App() {
           </div>
         )}
 
-        {activeTab === 'education' && (
-          <div>
-            {/* Education tab content - keeping the existing comprehensive education section */}
-            <div style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #2563eb 100%)', borderRadius: '0.75rem', padding: '2rem', marginBottom: '2rem' }}>
-              <h2 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Activity size={32} color="white" />
-                Investment Education Center
-              </h2>
-              <p style={{ color: '#e0e7ff', fontSize: '1rem', marginBottom: '1rem' }}>
-                Master the key financial indicators that professional investors use to make informed decisions
-              </p>
-            </div>
-            <p style={{ color: '#94a3b8' }}>Educational content is available in your full application.</p>
-          </div>
-        )}
-      </div>
+   {activeTab === 'education' && (
+  <Education fredData={fredData} />
+)}
+      
+
+
+</div>
 
       {showAuth && <Auth onClose={() => setShowAuth(false)} />}
 
