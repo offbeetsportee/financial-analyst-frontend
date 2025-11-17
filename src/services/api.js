@@ -39,7 +39,7 @@ export const marketAPI = {
     return response.json();
   },
 
-getHistoricalData: async (years = 10) => {
+  getHistoricalData: async (years = 10) => {
     const response = await fetch(`${API_URL}/market/fred-historical?years=${years}`);
     if (!response.ok) throw new Error('Failed to fetch historical data');
     return response.json();
@@ -51,14 +51,11 @@ getHistoricalData: async (years = 10) => {
     return response.json();
   },
 
-// NEW - Get live market indices
   getLiveIndices: async () => {
     const response = await fetch(`${API_URL}/market/indices/key`);
     if (!response.ok) throw new Error('Failed to fetch live market indices');
     return response.json();
   }
-
-
 };
 
 export const watchlistAPI = {
@@ -254,6 +251,16 @@ export const portfolioAPI = {
       body: JSON.stringify({ csvData, brokerFormat })
     });
     if (!response.ok) throw new Error('Failed to import CSV');
+    return response.json();
+  },
+
+  getPerformance: async (userId, portfolioId, days = 365) => {
+    const response = await fetch(`${API_URL}/portfolio/${portfolioId}/performance?days=${days}`, {
+      headers: {
+        'x-user-id': userId
+      }
+    });
+    if (!response.ok) throw new Error('Failed to fetch performance');
     return response.json();
   }
 };

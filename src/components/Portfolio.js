@@ -1,6 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { Briefcase, Plus, TrendingUp, TrendingDown, Trash2, Loader, DollarSign, PieChart, Calendar, Upload } from 'lucide-react';
 import { portfolioAPI, stockAPI } from '../services/api';
+import { Line } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+} from 'chart.js';
+
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 const Portfolio = ({ user }) => {
   const [portfolios, setPortfolios] = useState([]);
@@ -28,6 +52,9 @@ const Portfolio = ({ user }) => {
   const [brokerFormat, setBrokerFormat] = useState('generic');
   const [importing, setImporting] = useState(false);
   const [csvPreview, setCsvPreview] = useState(null);
+const [performanceData, setPerformanceData] = useState(null);
+  const [performanceLoading, setPerformanceLoading] = useState(false);
+  const [performanceRange, setPerformanceRange] = useState(365);
 
   useEffect(() => {
     if (user) {
@@ -46,6 +73,12 @@ const Portfolio = ({ user }) => {
       fetchCurrentPrices();
     }
   }, [portfolioDetails]);
+
+useEffect(() => {
+    if (selectedPortfolio && user) {
+      fetchPerformance();
+    }
+  }, [selectedPortfolio, performanceRange, user]);
 
   const fetchPortfolios = async () => {
     if (!user) return;
@@ -188,6 +221,20 @@ const Portfolio = ({ user }) => {
     }
   };
 
+ const fetchPerformance = async () => {
+    if (!user || !selectedPortfolio) return;
+
+    setPerformanceLoading(true);
+    try {
+      const data = await portfolioAPI.getPerformance(user.id, selectedPortfolio, performanceRange);
+      setPerformanceData(data.performance);
+    } catch (error) {
+      console.error('Failed to fetch performance:', error);
+    } finally {
+      setPerformanceLoading(false);
+    }
+  };
+
   const calculatePortfolioValue = () => {
     if (!portfolioDetails?.holdings) return 0;
     return portfolioDetails.holdings.reduce((total, holding) => {
@@ -211,6 +258,139 @@ const Portfolio = ({ user }) => {
     const cost = calculateTotalCost();
     if (cost === 0) return 0;
     return ((calculateProfitLoss() / cost) * 100);
+  };
+
+const renderPerformanceChart = () => {
+    if (!performanceData || performanceData.length === 0) {
+      return (
+        <div style={{ 
+          background: 'rgba(30, 41, 59, 0.5)', 
+          border: '1px solid #334155', 
+          borderRadius: '0.75rem', 
+          padding: '2rem',
+          textAlign: 'center'
+        }}>
+          <p style={{ color: '#94a3b8' }}>No performance data available yet</p>
+        </div>
+      );
+    }
+
+    const chartData = {
+      labels: performanceData.map(d => new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
+      datasets: [
+        {
+          label: 'Portfolio Value',
+          data: performanceData.map(d => d.value),
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          fill: true,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          borderWidth: 2
+        },
+        {
+          label: 'Total Cost',
+          data: performanceData.map(d => d.cost),
+          borderColor: '#94a3b8',
+          backgroundColor: 'rgba(148, 163, 184, 0.05)',
+          fill: true,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          borderWidth: 2,
+          borderDash: [5, 5]
+        }
+      ]
+    };
+
+    const chartOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          labels: {
+            color: '#cbd5e1',
+            usePointStyle: true,
+            padding: 15
+          }
+        },
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+          backgroundColor: 'rgba(15, 23, 42, 0.9)',
+          titleColor: '#cbd5e1',
+          bodyColor: '#cbd5e1',
+          borderColor: '#334155',
+          borderWidth: 1,
+          padding: 12,
+          displayColors: true,
+          callbacks: {
+            label: function(context) {
+              let label = context.dataset.label || '';
+              if (label) {
+                label += ': ';
+              }
+              label += '$' + context.parsed.y.toFixed(2);
+              return label;
+            },
+            afterBody: function(context) {
+              if (context[0].dataIndex < performanceData.length) {
+                const dataPoint = performanceData[context[0].dataIndex];
+                return [
+                  '',
+                  `P&L: $${dataPoint.profitLoss.toFixed(2)} (${dataPoint.profitLossPercent >= 0 ? '+' : ''}${dataPoint.profitLossPercent.toFixed(2)}%)`
+                ];
+              }
+              return '';
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: {
+            color: 'rgba(51, 65, 85, 0.5)',
+            drawBorder: false
+          },
+          ticks: {
+            color: '#94a3b8',
+            maxTicksLimit: 8
+          }
+        },
+        y: {
+          grid: {
+            color: 'rgba(51, 65, 85, 0.5)',
+            drawBorder: false
+          },
+          ticks: {
+            color: '#94a3b8',
+            callback: function(value) {
+              return '$' + value.toFixed(0);
+            }
+          }
+        }
+      },
+      interaction: {
+        mode: 'nearest',
+        axis: 'x',
+        intersect: false
+      }
+    };
+
+    return (
+      <div style={{ height: '400px', position: 'relative' }}>
+        {performanceLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+            <Loader size={32} color="#60a5fa" className="spin" />
+          </div>
+        ) : (
+          <Line data={chartData} options={chartOptions} />
+        )}
+      </div>
+    );
   };
 
   if (!user) {
@@ -426,6 +606,53 @@ const Portfolio = ({ user }) => {
               </div>
             </div>
           </div>
+
+
+{/* ⭐ ADD THE ENTIRE PERFORMANCE CHART SECTION HERE ⭐ */}
+          <div style={{ marginBottom: '2rem' }}>
+            <div style={{ 
+              background: 'rgba(30, 41, 59, 0.5)', 
+              border: '1px solid #334155', 
+              borderRadius: '0.75rem', 
+              padding: '1.5rem'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <TrendingUp size={20} color="#10b981" />
+                  Performance
+                </h3>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  {[
+                    { label: '1M', days: 30 },
+                    { label: '3M', days: 90 },
+                    { label: '6M', days: 180 },
+                    { label: '1Y', days: 365 },
+                    { label: 'All', days: 3650 }
+                  ].map(range => (
+                    <button
+                      key={range.label}
+                      onClick={() => setPerformanceRange(range.days)}
+                      style={{
+                        padding: '0.5rem 1rem',
+                        background: performanceRange === range.days ? '#10b981' : '#334155',
+                        border: 'none',
+                        borderRadius: '0.375rem',
+                        color: 'white',
+                        cursor: 'pointer',
+                        fontSize: '0.875rem',
+                        fontWeight: performanceRange === range.days ? '600' : '400',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {range.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {renderPerformanceChart()}
+            </div>
+          </div>
+
 
           {/* Add Transaction & Import CSV Buttons */}
           <div style={{ marginBottom: '2rem' }}>
