@@ -254,7 +254,7 @@ export const portfolioAPI = {
     return response.json();
   },
 
-  getPerformance: async (userId, portfolioId, days = 365) => {
+getPerformance: async (userId, portfolioId, days = 365) => {
     const response = await fetch(`${API_URL}/portfolio/${portfolioId}/performance?days=${days}`, {
       headers: {
         'x-user-id': userId
@@ -262,5 +262,17 @@ export const portfolioAPI = {
     });
     if (!response.ok) throw new Error('Failed to fetch performance');
     return response.json();
+  },
+
+  deletePortfolio: async (userId, portfolioId) => {
+    const response = await fetch(`${API_URL}/portfolio/${portfolioId}`, {
+      method: 'DELETE',
+      headers: {
+        'x-user-id': userId
+      }
+    });
+    if (!response.ok) throw new Error('Failed to delete portfolio');
+    return response.json();
   }
 };
+  

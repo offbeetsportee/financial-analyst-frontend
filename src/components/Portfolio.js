@@ -237,6 +237,30 @@ const fetchCurrentPrices = async () => {
     }
   };
 
+
+ // Add this new function:
+  const handleDeletePortfolio = async () => {
+    if (!user || !selectedPortfolio) return;
+
+    const portfolio = portfolios.find(p => p.id === selectedPortfolio);
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete "${portfolio?.name}"?\n\nThis will permanently delete:\n- All transactions\n- All holdings\n- Performance history\n\nThis action cannot be undone!`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      await portfolioAPI.deletePortfolio(user.id, selectedPortfolio);
+      alert('Portfolio deleted successfully!');
+      setSelectedPortfolio(null);
+      setPortfolioDetails(null);
+      fetchPortfolios();
+    } catch (error) {
+      console.error('Failed to delete portfolio:', error);
+      alert('Failed to delete portfolio: ' + error.message);
+    }
+  };
+
   const calculatePortfolioValue = () => {
     if (!portfolioDetails?.holdings) return 0;
     return portfolioDetails.holdings.reduce((total, holding) => {
@@ -628,9 +652,38 @@ const renderPerformanceChart = () => {
                 {portfolio.name}
               </button>
             ))}
+
+
+ {/* Add Delete Button */}
+            {selectedPortfolio && (
+              <button
+                onClick={handleDeletePortfolio}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  borderRadius: '0.5rem',
+                  border: '1px solid rgba(239, 68, 68, 0.5)',
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  color: '#ef4444',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  marginLeft: 'auto'
+                }}
+                title="Delete this portfolio"
+              >
+                <Trash2 size={16} />
+                Delete Portfolio
+              </button>
+            )}
           </div>
         </div>
       )}
+
+          
 
       {/* Portfolio Summary */}
       {portfolioDetails && (
