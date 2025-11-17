@@ -171,73 +171,97 @@ const toggleWatchlist = async () => {
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%)', color: 'white', fontFamily: 'system-ui' }}>
-      <div style={{ background: 'rgba(30, 41, 59, 0.5)', borderBottom: '1px solid #334155', padding: '0.75rem 1rem' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <img 
-              src="/images/offbeet-logo.jpeg" 
-              alt="Offbeet Tech Logo" 
-              style={{ width: '48px', height: '48px', objectFit: 'contain' }}
-            />
-            <div>
-              <h1 style={{ margin: 0, fontSize: '1.5rem' }}>InvestorIQ</h1>
-              <p style={{ margin: 0, fontSize: '0.75rem', color: '#94a3b8' }}>
-                by <span style={{ color: '#60a5fa', fontWeight: '600' }}>Offbeet Media and Tech Inc.</span>
-              </p>
-            </div>
-          </div>
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            {isAuthenticated ? (
-              <>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '0.5rem', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
-                  <User size={18} color="#60a5fa" />
-                  <span style={{ fontSize: '0.875rem', color: '#60a5fa' }}>{user?.email}</span>
-                </div>
-                <button
-                  onClick={logout}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    background: '#475569',
-                    border: 'none',
-                    borderRadius: '0.5rem',
-                    color: 'white',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    fontSize: '0.875rem',
-                    fontWeight: '500'
-                  }}
-                >
-                  <LogOut size={16} />
-                  Logout
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() => setShowAuth(true)}
-                style={{
-                  padding: '0.5rem 1.5rem',
-                  background: '#2563eb',
-                  border: 'none',
-                  borderRadius: '0.5rem',
-                  color: 'white',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  fontSize: '0.875rem',
-                  fontWeight: '600'
-                }}
-              >
-                <LogIn size={16} />
-                Login / Sign Up
-              </button>
-            )}
-          </div>
+      
+
+
+<div style={{ background: 'rgba(30, 41, 59, 0.5)', borderBottom: '1px solid #334155', padding: '0.75rem 1rem' }}>
+  <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+      {/* Logo and Title Row */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <img 
+          src="/images/offbeet-logo.jpeg" 
+          alt="Offbeet Tech Logo" 
+          style={{ width: '40px', height: '40px', objectFit: 'contain' }}
+        />
+        <div style={{ flex: 1 }}>
+          <h1 style={{ margin: 0, fontSize: '1.25rem' }}>InvestorIQ</h1>
+          <p style={{ margin: 0, fontSize: '0.7rem', color: '#94a3b8' }}>
+            by <span style={{ color: '#60a5fa', fontWeight: '600' }}>Offbeet Media and Tech Inc.</span>
+          </p>
         </div>
       </div>
+      
+      {/* Auth Button Row - Full Width on Mobile */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        {isAuthenticated ? (
+          <>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.5rem', 
+              padding: '0.5rem 0.75rem', 
+              background: 'rgba(59, 130, 246, 0.1)', 
+              borderRadius: '0.5rem', 
+              border: '1px solid rgba(59, 130, 246, 0.3)',
+              flex: 1,
+              overflow: 'hidden'
+            }}>
+              <User size={16} color="#60a5fa" />
+              <span style={{ fontSize: '0.75rem', color: '#60a5fa', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {user?.email}
+              </span>
+            </div>
+            <button
+              onClick={logout}
+              style={{
+                padding: '0.5rem 0.75rem',
+                background: '#475569',
+                border: 'none',
+                borderRadius: '0.5rem',
+                color: 'white',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '0.75rem',
+                fontWeight: '500',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              <LogOut size={14} />
+              Logout
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={() => setShowAuth(true)}
+            style={{
+              width: '100%',
+              padding: '0.75rem 1rem',
+              background: '#2563eb',
+              border: 'none',
+              borderRadius: '0.5rem',
+              color: 'white',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              fontSize: '0.875rem',
+              fontWeight: '600'
+            }}
+          >
+            <LogIn size={16} />
+            Login / Sign Up
+          </button>
+        )}
+      </div>
+    </div>
+  </div>
+</div>
+
+
 
       <div style={{ maxWidth: '1200px', margin: '1rem auto', padding: '0 1rem' }}>
 
