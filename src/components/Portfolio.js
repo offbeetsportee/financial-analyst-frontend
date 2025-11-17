@@ -111,16 +111,18 @@ useEffect(() => {
     }
   };
 
-  const fetchCurrentPrices = async () => {
+const fetchCurrentPrices = async () => {
     if (!portfolioDetails?.holdings) return;
 
     const prices = {};
     for (const holding of portfolioDetails.holdings) {
       try {
+        // Use real stock API to get current price
         const data = await stockAPI.getStockData(holding.symbol);
-        prices[holding.symbol] = parseFloat(holding.average_cost) * (1 + (Math.random() * 0.2 - 0.1));
+        prices[holding.symbol] = data.currentPrice || parseFloat(holding.average_cost);
       } catch (error) {
-        console.error(`Failed to fetch price for ${holding.symbol}`);
+        console.error(`Failed to fetch price for ${holding.symbol}:`, error);
+        // Fallback to average cost if API fails
         prices[holding.symbol] = parseFloat(holding.average_cost);
       }
     }
@@ -271,6 +273,53 @@ const renderPerformanceChart = () => {
           textAlign: 'center'
         }}>
           <p style={{ color: '#94a3b8' }}>No performance data available yet</p>
+          <p style={{ color: '#64748b', fontSize: '0.875rem', marginTop: '0.5rem' }}>
+            Performance tracking starts from your first transaction date
+          </p>
+        </div>
+      );
+    }
+
+    // If only one data point, show current value as bar chart instead
+    if (performanceData.length === 1) {
+      const dataPoint = performanceData[0];
+      return (
+        <div style={{ 
+          background: 'rgba(30, 41, 59, 0.5)', 
+          border: '1px solid #334155', 
+          borderRadius: '0.75rem', 
+          padding: '2rem'
+        }}>
+          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ fontSize: '0.875rem', color: '#94a3b8', marginBottom: '0.5rem' }}>
+              Current Portfolio Status
+            </div>
+            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#10b981' }}>
+              ${dataPoint.value.toFixed(2)}
+            </div>
+            <div style={{ fontSize: '0.875rem', color: '#cbd5e1', marginTop: '0.5rem' }}>
+              Cost Basis: ${dataPoint.cost.toFixed(2)}
+            </div>
+            <div style={{ 
+              fontSize: '1.25rem', 
+              fontWeight: '600',
+              color: dataPoint.profitLoss >= 0 ? '#10b981' : '#ef4444',
+              marginTop: '1rem'
+            }}>
+              {dataPoint.profitLoss >= 0 ? '+' : ''}${dataPoint.profitLoss.toFixed(2)} 
+              ({dataPoint.profitLoss >= 0 ? '+' : ''}{dataPoint.profitLossPercent.toFixed(2)}%)
+            </div>
+          </div>
+          <div style={{ 
+            background: 'rgba(59, 130, 246, 0.1)', 
+            border: '1px solid rgba(59, 130, 246, 0.3)',
+            borderRadius: '0.5rem',
+            padding: '1rem',
+            fontSize: '0.875rem',
+            color: '#93c5fd'
+          }}>
+            💡 Historical performance chart will appear after a few days of tracking
+          </div>
         </div>
       );
     }
@@ -285,7 +334,7 @@ const renderPerformanceChart = () => {
           backgroundColor: 'rgba(16, 185, 129, 0.1)',
           fill: true,
           tension: 0.4,
-          pointRadius: 0,
+          pointRadius: performanceData.length < 10 ? 3 : 0,
           pointHoverRadius: 4,
           borderWidth: 2
         },
