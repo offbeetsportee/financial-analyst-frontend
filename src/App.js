@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown, DollarSign, Activity, BarChart3, AlertCircle, ChevronDown, ChevronUp, RefreshCw, Loader, LogIn, LogOut, User, Star } from 'lucide-react';
-import { stockAPI, marketAPI, watchlistAPI } from './services/api';
+import { stockAPI, marketAPI, watchlistAPI, alertsAPI } from './services/api';
 import { useAuth } from './context/AuthContext';
 import Auth from './components/Auth';
 import StockChart from './components/StockChart';
@@ -8,6 +8,7 @@ import Education from './components/Education';
 import MarketDashboard from './components/MarketDashboard';
 import SchedulerAdmin from './components/SchedulerAdmin';
 import Watchlist from './components/Watchlist';
+import Alerts from './components/Alerts';
 import './App.css';
 
 function App() {
@@ -625,11 +626,16 @@ const toggleWatchlist = async () => {
         )}
 
         {activeTab === 'settings' && (
-          <div>
-            <SchedulerAdmin />
-          </div>
-        )}
-      </div>
+  <div>
+    <SchedulerAdmin />
+    
+    {/* Add Email Alerts Section */}
+    <div style={{ marginTop: '2rem' }}>
+      <Alerts user={user} />
+    </div>
+  </div>
+)}
+     </div>
 
       {showAuth && <Auth onClose={() => setShowAuth(false)} />}
 

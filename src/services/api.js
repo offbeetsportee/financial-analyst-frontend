@@ -116,3 +116,72 @@ export const watchlistAPI = {
     return response.json();
   }
 };
+
+export const alertsAPI = {
+  getAlerts: async (userId) => {
+    const response = await fetch(`${API_URL}/alerts`, {
+      headers: {
+        'x-user-id': userId
+      }
+    });
+    if (!response.ok) throw new Error('Failed to fetch alerts');
+    return response.json();
+  },
+
+  createAlert: async (userId, symbol, alertPrice, direction) => {
+    const response = await fetch(`${API_URL}/alerts/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': userId
+      },
+      body: JSON.stringify({ symbol, alertPrice, direction })
+    });
+    if (!response.ok) throw new Error('Failed to create alert');
+    return response.json();
+  },
+
+  deleteAlert: async (userId, alertId) => {
+    const response = await fetch(`${API_URL}/alerts/${alertId}`, {
+      method: 'DELETE',
+      headers: {
+        'x-user-id': userId
+      }
+    });
+    if (!response.ok) throw new Error('Failed to delete alert');
+    return response.json();
+  },
+
+  toggleAlert: async (userId, alertId) => {
+    const response = await fetch(`${API_URL}/alerts/${alertId}/toggle`, {
+      method: 'PATCH',
+      headers: {
+        'x-user-id': userId
+      }
+    });
+    if (!response.ok) throw new Error('Failed to toggle alert');
+    return response.json();
+  },
+
+  sendTestEmail: async (userId) => {
+    const response = await fetch(`${API_URL}/alerts/test-email`, {
+      method: 'POST',
+      headers: {
+        'x-user-id': userId
+      }
+    });
+    if (!response.ok) throw new Error('Failed to send test email');
+    return response.json();
+  },
+
+  sendDailySummary: async (userId) => {
+    const response = await fetch(`${API_URL}/alerts/daily-summary`, {
+      method: 'POST',
+      headers: {
+        'x-user-id': userId
+      }
+    });
+    if (!response.ok) throw new Error('Failed to send daily summary');
+    return response.json();
+  }
+};
