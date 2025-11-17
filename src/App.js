@@ -338,7 +338,11 @@ const toggleWatchlist = async () => {
                       { key: 'Unemployment Rate', description: 'Percentage of labor force without jobs', format: (v) => `${v.toFixed(1)}%` },
                       { key: 'GDP Growth', description: 'Quarterly economic growth rate (annualized)', format: (v) => `${v.toFixed(1)}%` },
                       { key: '10-Year Treasury', description: 'U.S. government 10-year bond yield', format: (v) => `${v.toFixed(2)}%` },
-                      { key: 'Consumer Confidence', description: 'Index measuring consumer optimism', format: (v) => v.toFixed(1) }
+                      { key: 'Consumer Confidence', description: 'Index measuring consumer optimism', format: (v) => v.toFixed(1) },
+{ key: 'Retail Sales', description: 'Monthly retail and food services sales', format: (v) => `$${(v / 1000).toFixed(0)}B` },
+  { key: 'Housing Starts', description: 'New residential construction starts', format: (v) => `${v.toFixed(0)}K` }
+
+
                     ].map((config, idx) => {
                       const indicator = fredData[config.key];
                       if (!indicator) return null;
