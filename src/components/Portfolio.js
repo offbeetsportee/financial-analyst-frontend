@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Briefcase, Plus, TrendingUp, TrendingDown, Trash2, Loader, DollarSign, PieChart, Calendar } from 'lucide-react';
+import { Briefcase, Plus, TrendingUp, TrendingDown, Trash2, Loader, DollarSign, PieChart, Calendar, Upload } from 'lucide-react';
 import { portfolioAPI, stockAPI } from '../services/api';
 
 const Portfolio = ({ user }) => {
@@ -22,6 +22,12 @@ const Portfolio = ({ user }) => {
     transactionDate: new Date().toISOString().split('T')[0],
     notes: ''
   });
+
+  const [showImportForm, setShowImportForm] = useState(false);
+  const [importFile, setImportFile] = useState(null);
+  const [brokerFormat, setBrokerFormat] = useState('generic');
+  const [importing, setImporting] = useState(false);
+  const [csvPreview, setCsvPreview] = useState(null);
 
   useEffect(() => {
     if (user) {
@@ -79,7 +85,6 @@ const Portfolio = ({ user }) => {
     for (const holding of portfolioDetails.holdings) {
       try {
         const data = await stockAPI.getStockData(holding.symbol);
-        // Use a mock current price based on average cost (in real app, get from price API)
         prices[holding.symbol] = parseFloat(holding.average_cost) * (1 + (Math.random() * 0.2 - 0.1));
       } catch (error) {
         console.error(`Failed to fetch price for ${holding.symbol}`);
@@ -137,6 +142,49 @@ const Portfolio = ({ user }) => {
     } catch (error) {
       console.error('Failed to delete transaction:', error);
       alert('Failed to delete transaction');
+    }
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImportFile(file);
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const csvData = event.target.result;
+        const lines = csvData.split('\n').slice(0, 6);
+        setCsvPreview(lines.join('\n'));
+      };
+      reader.readAsText(file);
+    }
+  };
+
+  const handleImportCSV = async () => {
+    if (!user || !selectedPortfolio || !importFile) return;
+
+    setImporting(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const csvData = event.target.result;
+        
+        const result = await portfolioAPI.importCSV(user.id, selectedPortfolio, csvData, brokerFormat);
+        
+        alert(`Successfully imported ${result.imported} of ${result.total} transactions!`);
+        
+        setImportFile(null);
+        setCsvPreview(null);
+        setShowImportForm(false);
+        
+        fetchPortfolioDetails(selectedPortfolio);
+      };
+      reader.readAsText(importFile);
+    } catch (error) {
+      console.error('Failed to import CSV:', error);
+      alert('Failed to import CSV: ' + error.message);
+    } finally {
+      setImporting(false);
     }
   };
 
@@ -379,28 +427,186 @@ const Portfolio = ({ user }) => {
             </div>
           </div>
 
-          {/* Add Transaction Button */}
+          {/* Add Transaction & Import CSV Buttons */}
           <div style={{ marginBottom: '2rem' }}>
-            <button
-              onClick={() => setShowTransactionForm(!showTransactionForm)}
-              style={{
-                padding: '0.75rem 1.5rem',
-                background: '#2563eb',
-                border: 'none',
-                borderRadius: '0.5rem',
-                color: 'white',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                fontSize: '0.875rem',
-                fontWeight: '600'
-              }}
-            >
-              <Plus size={16} />
-              Add Transaction
-            </button>
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => setShowTransactionForm(!showTransactionForm)}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  background: '#2563eb',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  color: 'white',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  fontSize: '0.875rem',
+                  fontWeight: '600'
+                }}
+              >
+                <Plus size={16} />
+                Add Transaction
+              </button>
+              
+              <button
+                onClick={() => setShowImportForm(!showImportForm)}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  background: '#059669',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  color: 'white',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  fontSize: '0.875rem',
+                  fontWeight: '600'
+                }}
+              >
+                <Upload size={16} />
+                Import CSV
+              </button>
+            </div>
           </div>
+
+          {/* Import CSV Form */}
+          {showImportForm && (
+            <div style={{ 
+              background: 'rgba(30, 41, 59, 0.5)', 
+              border: '1px solid #334155', 
+              borderRadius: '0.75rem', 
+              padding: '1.5rem',
+              marginBottom: '2rem'
+            }}>
+              <h3 style={{ fontSize: '1.125rem', marginBottom: '1rem' }}>Import Transactions from CSV</h3>
+              
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ display: 'block', fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.5rem' }}>
+                  Broker Format
+                </label>
+                <select
+                  value={brokerFormat}
+                  onChange={(e) => setBrokerFormat(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    background: '#1e293b',
+                    border: '1px solid #334155',
+                    borderRadius: '0.5rem',
+                    color: 'white',
+                    fontSize: '1rem',
+                    marginBottom: '1rem'
+                  }}
+                >
+                  <option value="generic">Generic CSV (Symbol, Type, Shares, Price, Date)</option>
+                  <option value="fidelity">Fidelity</option>
+                  <option value="schwab">Charles Schwab</option>
+                  <option value="robinhood">Robinhood</option>
+                </select>
+                
+                <div style={{ 
+                  background: 'rgba(59, 130, 246, 0.1)', 
+                  border: '1px solid rgba(59, 130, 246, 0.3)',
+                  borderRadius: '0.5rem',
+                  padding: '1rem',
+                  marginBottom: '1rem'
+                }}>
+                  <p style={{ fontSize: '0.875rem', color: '#93c5fd', margin: 0 }}>
+                    💡 <strong>How to export from your broker:</strong>
+                  </p>
+                  <ul style={{ fontSize: '0.75rem', color: '#cbd5e1', marginTop: '0.5rem', paddingLeft: '1.5rem' }}>
+                    <li><strong>Fidelity:</strong> Accounts → History → Download</li>
+                    <li><strong>Schwab:</strong> Accounts → History → Export</li>
+                    <li><strong>Robinhood:</strong> Account → Statements → Export History</li>
+                    <li><strong>Generic:</strong> Create CSV with columns: Symbol, Type, Shares, Price, Date</li>
+                  </ul>
+                </div>
+
+                <label style={{ display: 'block', fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.5rem' }}>
+                  Upload CSV File
+                </label>
+                <input
+                  type="file"
+                  accept=".csv,.xlsx,.xls"
+                  onChange={handleFileUpload}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    background: '#1e293b',
+                    border: '1px solid #334155',
+                    borderRadius: '0.5rem',
+                    color: 'white',
+                    fontSize: '1rem'
+                  }}
+                />
+              </div>
+
+              {csvPreview && (
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.5rem' }}>
+                    Preview (first 5 rows):
+                  </label>
+                  <pre style={{
+                    background: '#0f172a',
+                    border: '1px solid #334155',
+                    borderRadius: '0.5rem',
+                    padding: '1rem',
+                    fontSize: '0.75rem',
+                    color: '#cbd5e1',
+                    overflow: 'auto',
+                    maxHeight: '200px'
+                  }}>
+                    {csvPreview}
+                  </pre>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button
+                  onClick={handleImportCSV}
+                  disabled={!importFile || importing}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    background: importing || !importFile ? '#475569' : '#059669',
+                    border: 'none',
+                    borderRadius: '0.5rem',
+                    color: 'white',
+                    cursor: importing || !importFile ? 'not-allowed' : 'pointer',
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  {importing ? <Loader size={16} className="spin" /> : <Upload size={16} />}
+                  {importing ? 'Importing...' : 'Import Transactions'}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowImportForm(false);
+                    setImportFile(null);
+                    setCsvPreview(null);
+                  }}
+                  disabled={importing}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    background: '#475569',
+                    border: 'none',
+                    borderRadius: '0.5rem',
+                    color: 'white',
+                    cursor: importing ? 'not-allowed' : 'pointer',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Transaction Form */}
           {showTransactionForm && (
