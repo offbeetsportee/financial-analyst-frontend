@@ -186,7 +186,6 @@ export const alertsAPI = {
   }
 };
 
-
 export const portfolioAPI = {
   getPortfolios: async (userId) => {
     const response = await fetch(`${API_URL}/portfolio`, {
@@ -242,6 +241,19 @@ export const portfolioAPI = {
       }
     });
     if (!response.ok) throw new Error('Failed to delete transaction');
+    return response.json();
+  },
+
+  importCSV: async (userId, portfolioId, csvData, brokerFormat) => {
+    const response = await fetch(`${API_URL}/portfolio/${portfolioId}/import-csv`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': userId
+      },
+      body: JSON.stringify({ csvData, brokerFormat })
+    });
+    if (!response.ok) throw new Error('Failed to import CSV');
     return response.json();
   }
 };
