@@ -1,0 +1,742 @@
+import React, { useState, useEffect } from 'react';
+import { Briefcase, Plus, TrendingUp, TrendingDown, Trash2, Loader, DollarSign, PieChart, Calendar } from 'lucide-react';
+import { portfolioAPI, stockAPI } from '../services/api';
+
+const Portfolio = ({ user }) => {
+  const [portfolios, setPortfolios] = useState([]);
+  const [selectedPortfolio, setSelectedPortfolio] = useState(null);
+  const [portfolioDetails, setPortfolioDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showTransactionForm, setShowTransactionForm] = useState(false);
+  const [currentPrices, setCurrentPrices] = useState({});
+
+  // Form states
+  const [portfolioForm, setPortfolioForm] = useState({ name: '', description: '' });
+  const [transactionForm, setTransactionForm] = useState({
+    symbol: '',
+    transactionType: 'buy',
+    shares: '',
+    pricePerShare: '',
+    transactionDate: new Date().toISOString().split('T')[0],
+    notes: ''
+  });
+
+  useEffect(() => {
+    if (user) {
+      fetchPortfolios();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (selectedPortfolio) {
+      fetchPortfolioDetails(selectedPortfolio);
+    }
+  }, [selectedPortfolio]);
+
+  useEffect(() => {
+    if (portfolioDetails?.holdings) {
+      fetchCurrentPrices();
+    }
+  }, [portfolioDetails]);
+
+  const fetchPortfolios = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      const data = await portfolioAPI.getPortfolios(user.id);
+      setPortfolios(data);
+      if (data.length > 0 && !selectedPortfolio) {
+        setSelectedPortfolio(data[0].id);
+      }
+    } catch (error) {
+      console.error('Failed to fetch portfolios:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchPortfolioDetails = async (portfolioId) => {
+    if (!user) return;
+    
+    setDetailsLoading(true);
+    try {
+      const data = await portfolioAPI.getPortfolioDetails(user.id, portfolioId);
+      setPortfolioDetails(data);
+    } catch (error) {
+      console.error('Failed to fetch portfolio details:', error);
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+
+  const fetchCurrentPrices = async () => {
+    if (!portfolioDetails?.holdings) return;
+
+    const prices = {};
+    for (const holding of portfolioDetails.holdings) {
+      try {
+        const data = await stockAPI.getStockData(holding.symbol);
+        // Use a mock current price based on average cost (in real app, get from price API)
+        prices[holding.symbol] = parseFloat(holding.average_cost) * (1 + (Math.random() * 0.2 - 0.1));
+      } catch (error) {
+        console.error(`Failed to fetch price for ${holding.symbol}`);
+        prices[holding.symbol] = parseFloat(holding.average_cost);
+      }
+    }
+    setCurrentPrices(prices);
+  };
+
+  const handleCreatePortfolio = async (e) => {
+    e.preventDefault();
+    if (!user) return;
+
+    try {
+      await portfolioAPI.createPortfolio(user.id, portfolioForm.name, portfolioForm.description);
+      setPortfolioForm({ name: '', description: '' });
+      setShowCreateForm(false);
+      fetchPortfolios();
+      alert('Portfolio created successfully!');
+    } catch (error) {
+      console.error('Failed to create portfolio:', error);
+      alert('Failed to create portfolio');
+    }
+  };
+
+  const handleAddTransaction = async (e) => {
+    e.preventDefault();
+    if (!user || !selectedPortfolio) return;
+
+    try {
+      await portfolioAPI.addTransaction(user.id, selectedPortfolio, transactionForm);
+      setTransactionForm({
+        symbol: '',
+        transactionType: 'buy',
+        shares: '',
+        pricePerShare: '',
+        transactionDate: new Date().toISOString().split('T')[0],
+        notes: ''
+      });
+      setShowTransactionForm(false);
+      fetchPortfolioDetails(selectedPortfolio);
+      alert('Transaction added successfully!');
+    } catch (error) {
+      console.error('Failed to add transaction:', error);
+      alert('Failed to add transaction');
+    }
+  };
+
+  const handleDeleteTransaction = async (transactionId) => {
+    if (!user || !window.confirm('Delete this transaction?')) return;
+
+    try {
+      await portfolioAPI.deleteTransaction(user.id, transactionId);
+      fetchPortfolioDetails(selectedPortfolio);
+    } catch (error) {
+      console.error('Failed to delete transaction:', error);
+      alert('Failed to delete transaction');
+    }
+  };
+
+  const calculatePortfolioValue = () => {
+    if (!portfolioDetails?.holdings) return 0;
+    return portfolioDetails.holdings.reduce((total, holding) => {
+      const currentPrice = currentPrices[holding.symbol] || parseFloat(holding.average_cost);
+      return total + (parseFloat(holding.total_shares) * currentPrice);
+    }, 0);
+  };
+
+  const calculateTotalCost = () => {
+    if (!portfolioDetails?.holdings) return 0;
+    return portfolioDetails.holdings.reduce((total, holding) => {
+      return total + parseFloat(holding.total_cost);
+    }, 0);
+  };
+
+  const calculateProfitLoss = () => {
+    return calculatePortfolioValue() - calculateTotalCost();
+  };
+
+  const calculateProfitLossPercent = () => {
+    const cost = calculateTotalCost();
+    if (cost === 0) return 0;
+    return ((calculateProfitLoss() / cost) * 100);
+  };
+
+  if (!user) {
+    return (
+      <div style={{ 
+        background: 'rgba(37, 99, 235, 0.1)', 
+        border: '1px solid rgba(37, 99, 235, 0.3)', 
+        borderRadius: '0.75rem', 
+        padding: '3rem',
+        textAlign: 'center'
+      }}>
+        <Briefcase size={48} color="#60a5fa" style={{ margin: '0 auto 1rem' }} />
+        <h3 style={{ fontSize: '1.5rem', marginBottom: '0.75rem' }}>Login Required</h3>
+        <p style={{ color: '#94a3b8', fontSize: '1rem' }}>
+          Please log in to manage your investment portfolio
+        </p>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
+        <Loader size={48} color="#60a5fa" className="spin" />
+      </div>
+    );
+  }
+
+  const totalValue = calculatePortfolioValue();
+  const totalCost = calculateTotalCost();
+  const profitLoss = calculateProfitLoss();
+  const profitLossPercent = calculateProfitLossPercent();
+
+  return (
+    <div>
+      {/* Header */}
+      <div style={{ 
+        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', 
+        borderRadius: '0.75rem', 
+        padding: '2rem', 
+        marginBottom: '2rem'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', flexWrap: 'wrap', gap: '1rem' }}>
+          <div>
+            <h2 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Briefcase size={32} color="white" />
+              My Portfolios
+            </h2>
+            <p style={{ color: '#d1fae5', fontSize: '1rem', margin: 0 }}>
+              Track your investments and performance
+            </p>
+          </div>
+          <button
+            onClick={() => setShowCreateForm(!showCreateForm)}
+            style={{
+              padding: '0.75rem 1.5rem',
+              background: 'rgba(255, 255, 255, 0.2)',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              borderRadius: '0.5rem',
+              color: 'white',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              fontSize: '0.875rem',
+              fontWeight: '600'
+            }}
+          >
+            <Plus size={16} />
+            New Portfolio
+          </button>
+        </div>
+      </div>
+
+      {/* Create Portfolio Form */}
+      {showCreateForm && (
+        <div style={{ 
+          background: 'rgba(30, 41, 59, 0.5)', 
+          border: '1px solid #334155', 
+          borderRadius: '0.75rem', 
+          padding: '1.5rem',
+          marginBottom: '2rem'
+        }}>
+          <h3 style={{ fontSize: '1.125rem', marginBottom: '1rem' }}>Create New Portfolio</h3>
+          <form onSubmit={handleCreatePortfolio}>
+            <div style={{ display: 'grid', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.5rem' }}>
+                  Portfolio Name *
+                </label>
+                <input
+                  type="text"
+                  value={portfolioForm.name}
+                  onChange={(e) => setPortfolioForm({ ...portfolioForm, name: e.target.value })}
+                  placeholder="e.g. Retirement, Growth"
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    background: '#1e293b',
+                    border: '1px solid #334155',
+                    borderRadius: '0.5rem',
+                    color: 'white',
+                    fontSize: '1rem'
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.5rem' }}>
+                  Description (optional)
+                </label>
+                <textarea
+                  value={portfolioForm.description}
+                  onChange={(e) => setPortfolioForm({ ...portfolioForm, description: e.target.value })}
+                  placeholder="e.g. Long-term retirement holdings"
+                  rows={3}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    background: '#1e293b',
+                    border: '1px solid #334155',
+                    borderRadius: '0.5rem',
+                    color: 'white',
+                    fontSize: '1rem',
+                    resize: 'vertical'
+                  }}
+                />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+              <button
+                type="submit"
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  background: '#10b981',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  fontWeight: '600'
+                }}
+              >
+                Create Portfolio
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCreateForm(false)}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  background: '#475569',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem'
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Portfolio Selector */}
+      {portfolios.length > 0 && (
+        <div style={{ marginBottom: '2rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            {portfolios.map((portfolio) => (
+              <button
+                key={portfolio.id}
+                onClick={() => setSelectedPortfolio(portfolio.id)}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  borderRadius: '0.5rem',
+                  border: selectedPortfolio === portfolio.id ? '2px solid #10b981' : '1px solid #475569',
+                  background: selectedPortfolio === portfolio.id ? 'rgba(16, 185, 129, 0.2)' : '#334155',
+                  color: selectedPortfolio === portfolio.id ? '#10b981' : '#cbd5e1',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  fontWeight: selectedPortfolio === portfolio.id ? '600' : '400',
+                  transition: 'all 0.2s'
+                }}
+              >
+                {portfolio.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Portfolio Summary */}
+      {portfolioDetails && (
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+            <div style={{ background: 'rgba(30, 41, 59, 0.5)', borderRadius: '0.75rem', padding: '1.5rem', border: '1px solid #334155' }}>
+              <div style={{ fontSize: '0.875rem', color: '#94a3b8', marginBottom: '0.5rem' }}>Total Value</div>
+              <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#10b981' }}>${totalValue.toFixed(2)}</div>
+            </div>
+            <div style={{ background: 'rgba(30, 41, 59, 0.5)', borderRadius: '0.75rem', padding: '1.5rem', border: '1px solid #334155' }}>
+              <div style={{ fontSize: '0.875rem', color: '#94a3b8', marginBottom: '0.5rem' }}>Total Cost</div>
+              <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>${totalCost.toFixed(2)}</div>
+            </div>
+            <div style={{ background: 'rgba(30, 41, 59, 0.5)', borderRadius: '0.75rem', padding: '1.5rem', border: '1px solid #334155' }}>
+              <div style={{ fontSize: '0.875rem', color: '#94a3b8', marginBottom: '0.5rem' }}>Profit/Loss</div>
+              <div style={{ fontSize: '2rem', fontWeight: 'bold', color: profitLoss >= 0 ? '#10b981' : '#ef4444', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {profitLoss >= 0 ? <TrendingUp size={24} /> : <TrendingDown size={24} />}
+                ${Math.abs(profitLoss).toFixed(2)}
+              </div>
+              <div style={{ fontSize: '0.875rem', color: profitLoss >= 0 ? '#10b981' : '#ef4444', marginTop: '0.5rem' }}>
+                {profitLoss >= 0 ? '+' : ''}{profitLossPercent.toFixed(2)}%
+              </div>
+            </div>
+          </div>
+
+          {/* Add Transaction Button */}
+          <div style={{ marginBottom: '2rem' }}>
+            <button
+              onClick={() => setShowTransactionForm(!showTransactionForm)}
+              style={{
+                padding: '0.75rem 1.5rem',
+                background: '#2563eb',
+                border: 'none',
+                borderRadius: '0.5rem',
+                color: 'white',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '0.875rem',
+                fontWeight: '600'
+              }}
+            >
+              <Plus size={16} />
+              Add Transaction
+            </button>
+          </div>
+
+          {/* Transaction Form */}
+          {showTransactionForm && (
+            <div style={{ 
+              background: 'rgba(30, 41, 59, 0.5)', 
+              border: '1px solid #334155', 
+              borderRadius: '0.75rem', 
+              padding: '1.5rem',
+              marginBottom: '2rem'
+            }}>
+              <h3 style={{ fontSize: '1.125rem', marginBottom: '1rem' }}>Add Transaction</h3>
+              <form onSubmit={handleAddTransaction}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.5rem' }}>
+                      Symbol *
+                    </label>
+                    <input
+                      type="text"
+                      value={transactionForm.symbol}
+                      onChange={(e) => setTransactionForm({ ...transactionForm, symbol: e.target.value.toUpperCase() })}
+                      placeholder="e.g. AAPL"
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        background: '#1e293b',
+                        border: '1px solid #334155',
+                        borderRadius: '0.5rem',
+                        color: 'white',
+                        fontSize: '1rem'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.5rem' }}>
+                      Type *
+                    </label>
+                    <select
+                      value={transactionForm.transactionType}
+                      onChange={(e) => setTransactionForm({ ...transactionForm, transactionType: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        background: '#1e293b',
+                        border: '1px solid #334155',
+                        borderRadius: '0.5rem',
+                        color: 'white',
+                        fontSize: '1rem'
+                      }}
+                    >
+                      <option value="buy">Buy</option>
+                      <option value="sell">Sell</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.5rem' }}>
+                      Shares *
+                    </label>
+                    <input
+                      type="number"
+                      step="0.000001"
+                      value={transactionForm.shares}
+                      onChange={(e) => setTransactionForm({ ...transactionForm, shares: e.target.value })}
+                      placeholder="e.g. 10"
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        background: '#1e293b',
+                        border: '1px solid #334155',
+                        borderRadius: '0.5rem',
+                        color: 'white',
+                        fontSize: '1rem'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.5rem' }}>
+                      Price per Share *
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={transactionForm.pricePerShare}
+                      onChange={(e) => setTransactionForm({ ...transactionForm, pricePerShare: e.target.value })}
+                      placeholder="e.g. 150.00"
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        background: '#1e293b',
+                        border: '1px solid #334155',
+                        borderRadius: '0.5rem',
+                        color: 'white',
+                        fontSize: '1rem'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.5rem' }}>
+                      Date *
+                    </label>
+                    <input
+                      type="date"
+                      value={transactionForm.transactionDate}
+                      onChange={(e) => setTransactionForm({ ...transactionForm, transactionDate: e.target.value })}
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        background: '#1e293b',
+                        border: '1px solid #334155',
+                        borderRadius: '0.5rem',
+                        color: 'white',
+                        fontSize: '1rem'
+                      }}
+                    />
+                  </div>
+                </div>
+                <div style={{ marginTop: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.5rem' }}>
+                    Notes (optional)
+                  </label>
+                  <textarea
+                    value={transactionForm.notes}
+                    onChange={(e) => setTransactionForm({ ...transactionForm, notes: e.target.value })}
+                    placeholder="e.g. Dollar cost averaging"
+                    rows={2}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      background: '#1e293b',
+                      border: '1px solid #334155',
+                      borderRadius: '0.5rem',
+                      color: 'white',
+                      fontSize: '1rem',
+                      resize: 'vertical'
+                    }}
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                  <button
+                    type="submit"
+                    style={{
+                      padding: '0.75rem 1.5rem',
+                      background: '#2563eb',
+                      border: 'none',
+                      borderRadius: '0.5rem',
+                      color: 'white',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem',
+                      fontWeight: '600'
+                    }}
+                  >
+                    Add Transaction
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowTransactionForm(false)}
+                    style={{
+                      padding: '0.75rem 1.5rem',
+                      background: '#475569',
+                      border: 'none',
+                      borderRadius: '0.5rem',
+                      color: 'white',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem'
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Holdings */}
+          <div style={{ marginBottom: '2rem' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <PieChart size={20} color="#10b981" />
+              Current Holdings
+            </h3>
+            {portfolioDetails.holdings.length === 0 ? (
+              <div style={{ 
+                background: 'rgba(30, 41, 59, 0.5)', 
+                border: '1px solid #334155', 
+                borderRadius: '0.75rem', 
+                padding: '2rem',
+                textAlign: 'center'
+              }}>
+                <p style={{ color: '#94a3b8' }}>No holdings yet. Add your first transaction!</p>
+              </div>
+            ) : (
+              <div style={{ background: 'rgba(30, 41, 59, 0.5)', border: '1px solid #334155', borderRadius: '0.75rem', overflow: 'hidden' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ background: '#1e293b' }}>
+                      <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.875rem', color: '#94a3b8', fontWeight: '600' }}>Symbol</th>
+                      <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem', color: '#94a3b8', fontWeight: '600' }}>Shares</th>
+                      <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem', color: '#94a3b8', fontWeight: '600' }}>Avg Cost</th>
+                      <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem', color: '#94a3b8', fontWeight: '600' }}>Current Price</th>
+                      <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem', color: '#94a3b8', fontWeight: '600' }}>Value</th>
+                      <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem', color: '#94a3b8', fontWeight: '600' }}>Gain/Loss</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {portfolioDetails.holdings.map((holding) => {
+                      const currentPrice = currentPrices[holding.symbol] || parseFloat(holding.average_cost);
+                      const currentValue = parseFloat(holding.total_shares) * currentPrice;
+                      const gainLoss = currentValue - parseFloat(holding.total_cost);
+                      const gainLossPercent = (gainLoss / parseFloat(holding.total_cost)) * 100;
+
+                      return (
+                        <tr key={holding.id} style={{ borderTop: '1px solid #334155' }}>
+                          <td style={{ padding: '1rem', fontSize: '0.875rem', fontWeight: '600', color: '#60a5fa' }}>{holding.symbol}</td>
+                          <td style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem' }}>{parseFloat(holding.total_shares).toFixed(6)}</td>
+                          <td style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem' }}>${parseFloat(holding.average_cost).toFixed(2)}</td>
+                          <td style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem' }}>${currentPrice.toFixed(2)}</td>
+                          <td style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem', fontWeight: '600' }}>${currentValue.toFixed(2)}</td>
+                          <td style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem', fontWeight: '600', color: gainLoss >= 0 ? '#10b981' : '#ef4444' }}>
+                            {gainLoss >= 0 ? '+' : ''}${gainLoss.toFixed(2)} ({gainLoss >= 0 ? '+' : ''}{gainLossPercent.toFixed(2)}%)
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Transaction History */}
+          <div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Calendar size={20} color="#60a5fa" />
+              Transaction History
+            </h3>
+            {portfolioDetails.transactions.length === 0 ? (
+              <div style={{ 
+                background: 'rgba(30, 41, 59, 0.5)', 
+                border: '1px solid #334155', 
+                borderRadius: '0.75rem', 
+                padding: '2rem',
+                textAlign: 'center'
+              }}>
+                <p style={{ color: '#94a3b8' }}>No transactions yet</p>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gap: '0.5rem' }}>
+                {portfolioDetails.transactions.map((transaction) => (
+                  <div 
+                    key={transaction.id}
+                    style={{ 
+                      background: 'rgba(30, 41, 59, 0.5)', 
+                      border: '1px solid #334155', 
+                      borderRadius: '0.5rem', 
+                      padding: '1rem',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: '1rem'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
+                      <div style={{ 
+                        padding: '0.5rem',
+                        borderRadius: '0.375rem',
+                        background: transaction.transaction_type === 'buy' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                        border: `1px solid ${transaction.transaction_type === 'buy' ? '#10b981' : '#ef4444'}`
+                      }}>
+                        {transaction.transaction_type === 'buy' ? (
+                          <TrendingUp size={16} color="#10b981" />
+                        ) : (
+                          <TrendingDown size={16} color="#ef4444" />
+                        )}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#60a5fa' }}>{transaction.symbol}</div>
+                        <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                          {transaction.transaction_type.toUpperCase()} {parseFloat(transaction.shares).toFixed(6)} @ ${parseFloat(transaction.price_per_share).toFixed(2)}
+                        </div>
+                        <div style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                          {new Date(transaction.transaction_date).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '0.875rem', fontWeight: '600' }}>${parseFloat(transaction.total_amount).toFixed(2)}</div>
+                        {transaction.notes && (
+                          <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{transaction.notes}</div>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => handleDeleteTransaction(transaction.id)}
+                        style={{
+                          padding: '0.5rem',
+                          background: 'rgba(239, 68, 68, 0.1)',
+                          border: '1px solid rgba(239, 68, 68, 0.3)',
+                          borderRadius: '0.375rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}
+                        title="Delete transaction"
+                      >
+                        <Trash2 size={16} color="#ef4444" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {portfolios.length === 0 && (
+        <div style={{ 
+          background: 'rgba(30, 41, 59, 0.5)', 
+          border: '1px solid #334155', 
+          borderRadius: '0.75rem', 
+          padding: '3rem',
+          textAlign: 'center'
+        }}>
+          <Briefcase size={48} color="#94a3b8" style={{ margin: '0 auto 1rem' }} />
+          <h3 style={{ fontSize: '1.25rem', marginBottom: '0.75rem', color: '#cbd5e1' }}>No portfolios yet</h3>
+          <p style={{ color: '#94a3b8', fontSize: '0.875rem' }}>
+            Create your first portfolio to start tracking your investments
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Portfolio;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown, DollarSign, Activity, BarChart3, AlertCircle, ChevronDown, ChevronUp, RefreshCw, Loader, LogIn, LogOut, User, Star } from 'lucide-react';
-import { stockAPI, marketAPI, watchlistAPI, alertsAPI } from './services/api';
+import { stockAPI, marketAPI, watchlistAPI, alertsAPI, portfolioAPI } from './services/api';
 import { useAuth } from './context/AuthContext';
 import Auth from './components/Auth';
 import StockChart from './components/StockChart';
@@ -9,6 +9,7 @@ import MarketDashboard from './components/MarketDashboard';
 import SchedulerAdmin from './components/SchedulerAdmin';
 import Watchlist from './components/Watchlist';
 import Alerts from './components/Alerts';
+import Portfolio from './components/Portfolio';
 import './App.css';
 
 function App() {
@@ -273,8 +274,10 @@ const toggleWatchlist = async () => {
       <div style={{ maxWidth: '1200px', margin: '1rem auto', padding: '0 1rem' }}>
 
         <div className="tabs-container tab-scroll-container" style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid #334155', marginBottom: '2rem' }}>
-          {['market', 'company', 'watchlist', 'education', 'settings'].map(tab => (
-            <button
+
+          {['market', 'company', 'portfolio', 'watchlist', 'education', 'settings'].map(tab => (
+           
+ <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               style={{
@@ -661,7 +664,15 @@ const toggleWatchlist = async () => {
   </div>
 )}
 
+{activeTab === 'portfolio' && (
+  <div>
+    <Portfolio user={user} />
+  </div>
+)}
 
+{activeTab === 'education' && (
+  <Education fredData={fredData} />
+)}
 
         {activeTab === 'education' && (
           <Education fredData={fredData} />

@@ -185,3 +185,63 @@ export const alertsAPI = {
     return response.json();
   }
 };
+
+
+export const portfolioAPI = {
+  getPortfolios: async (userId) => {
+    const response = await fetch(`${API_URL}/portfolio`, {
+      headers: {
+        'x-user-id': userId
+      }
+    });
+    if (!response.ok) throw new Error('Failed to fetch portfolios');
+    return response.json();
+  },
+
+  createPortfolio: async (userId, name, description) => {
+    const response = await fetch(`${API_URL}/portfolio/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': userId
+      },
+      body: JSON.stringify({ name, description })
+    });
+    if (!response.ok) throw new Error('Failed to create portfolio');
+    return response.json();
+  },
+
+  getPortfolioDetails: async (userId, portfolioId) => {
+    const response = await fetch(`${API_URL}/portfolio/${portfolioId}`, {
+      headers: {
+        'x-user-id': userId
+      }
+    });
+    if (!response.ok) throw new Error('Failed to fetch portfolio details');
+    return response.json();
+  },
+
+  addTransaction: async (userId, portfolioId, transaction) => {
+    const response = await fetch(`${API_URL}/portfolio/${portfolioId}/transaction`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': userId
+      },
+      body: JSON.stringify(transaction)
+    });
+    if (!response.ok) throw new Error('Failed to add transaction');
+    return response.json();
+  },
+
+  deleteTransaction: async (userId, transactionId) => {
+    const response = await fetch(`${API_URL}/portfolio/transaction/${transactionId}`, {
+      method: 'DELETE',
+      headers: {
+        'x-user-id': userId
+      }
+    });
+    if (!response.ok) throw new Error('Failed to delete transaction');
+    return response.json();
+  }
+};
