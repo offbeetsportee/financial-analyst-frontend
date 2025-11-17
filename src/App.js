@@ -29,6 +29,13 @@ const [liveIndices, setLiveIndices] = useState(null);
 const [indicesLoading, setIndicesLoading] = useState(false);  
 const [inWatchlist, setInWatchlist] = useState(false); 
 
+// Set page title
+  useEffect(() => {
+    document.title = 'InvestorIQ - Professional Financial Analysis';
+  }, []);
+
+
+
   const fetchStockData = async (symbol) => {
     setLoading(true);
     setError(null);
