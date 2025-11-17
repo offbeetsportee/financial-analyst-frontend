@@ -171,7 +171,7 @@ const toggleWatchlist = async () => {
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%)', color: 'white', fontFamily: 'system-ui' }}>
-      <div style={{ background: 'rgba(30, 41, 59, 0.5)', borderBottom: '1px solid #334155', padding: '1rem 2rem' }}>
+      <div style={{ background: 'rgba(30, 41, 59, 0.5)', borderBottom: '1px solid #334155', padding: '0.75rem 1rem' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <img 
@@ -239,8 +239,9 @@ const toggleWatchlist = async () => {
         </div>
       </div>
 
-      <div style={{ maxWidth: '1200px', margin: '2rem auto', padding: '0 2rem' }}>
-        <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid #334155', marginBottom: '2rem' }}>
+      <div style={{ maxWidth: '1200px', margin: '1rem auto', padding: '0 1rem' }}>
+
+        <div className="tabs-container tab-scroll-container" style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid #334155', marginBottom: '2rem' }}>
           {['market', 'company', 'watchlist', 'education', 'settings'].map(tab => (
             <button
               key={tab}
