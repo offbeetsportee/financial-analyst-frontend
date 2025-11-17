@@ -380,7 +380,13 @@ const toggleWatchlist = async () => {
       Object.values(liveIndices).map((index, idx) => (
         <div key={idx} style={{ background: 'linear-gradient(135deg, rgba(51, 65, 85, 0.8) 0%, rgba(30, 41, 59, 0.8) 100%)', borderRadius: '0.5rem', padding: '1.25rem', border: '1px solid #475569' }}>
           <h3 style={{ fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.75rem', fontWeight: '500' }}>{index.name}</h3>
-          <div style={{ fontSize: '1.75rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>${index.value}</div>
+          
+
+<div style={{ fontSize: '1.75rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+  {['Crude Oil', 'Gold', 'Bitcoin'].includes(index.name) ? `$${index.value}` : index.value}
+</div>
+
+
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: index.status === 'up' ? '#34d399' : '#f87171', fontWeight: '600' }}>
             {index.status === 'up' ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
             <span>{parseFloat(index.change) > 0 ? '+' : ''}{parseFloat(index.change).toFixed(2)}%</span>
