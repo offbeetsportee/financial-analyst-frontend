@@ -37,19 +37,40 @@ const [inWatchlist, setInWatchlist] = useState(false);
 
 
 
-  const fetchStockData = async (symbol) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await stockAPI.getStockData(symbol);
-      setStockData(data);
-    } catch (err) {
-      setError(err.message);
-      setStockData(getDemoStockData(symbol));
-    } finally {
-      setLoading(false);
-    }
-  };
+ const fetchStockData = async (symbol) => {
+  setLoading(true);
+  setError(null);
+  try {
+    // Fetch both price data and company fundamentals
+    const [priceData, companyData] = await Promise.all([
+      stockAPI.getStockData(symbol),
+      stockAPI.getCompanyInfo(symbol)
+    ]);
+    
+    // Merge the data
+    const mergedData = {
+      ...priceData,
+      ...companyData,
+      // Map company API fields to what the display expects
+      MarketCapitalization: companyData.marketCap,
+      PERatio: companyData.peRatio,
+      EPS: companyData.eps,
+      ProfitMargin: companyData.profitMargin,
+      DebtToEquity: companyData.debtToEquity,
+      ReturnOnEquityTTM: companyData.roe,
+      DividendYield: companyData.dividendYield,
+      CurrentRatio: companyData.currentRatio,
+      BookValue: companyData.bookValue
+    };
+    
+    setStockData(mergedData);
+  } catch (err) {
+    setError(err.message);
+    setStockData(getDemoStockData(symbol));
+  } finally {
+    setLoading(false);
+  }
+};
 
   const fetchFREDData = async () => {
     setFredLoading(true);

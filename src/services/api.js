@@ -10,6 +10,13 @@ export const stockAPI = {
     return response.json();
   },
 
+// ADD THIS NEW METHOD ⬇️
+  getCompanyInfo: async (symbol) => {
+    const response = await fetch(`${API_URL}/stocks/${symbol}/company`);
+    if (!response.ok) throw new Error('Failed to fetch company info');
+    return response.json();
+  },
+
   getAllStocks: async () => {
     const response = await fetch(`${API_URL}/stocks`);
     if (!response.ok) throw new Error('Failed to fetch stocks');
