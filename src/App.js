@@ -190,9 +190,9 @@ const toggleWatchlist = async () => {
     return `$${num}`;
   };
 
-  const formatPercent = (value) => {
-    return `${(parseFloat(value) * 100).toFixed(2)}%`;
-  };
+ const formatPercent = (value) => {
+  return `${parseFloat(value).toFixed(2)}%`;
+};
 
   const stockCategories = {
     'Tech Giants': ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'NVDA'],
@@ -598,9 +598,12 @@ const toggleWatchlist = async () => {
           {inWatchlist ? 'In Watchlist' : 'Add to Watchlist'}
         </button>
       </div>
-      
-                  <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-                    <div>
+                  <div style={{ display: 'grid', 
+  gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', 
+  gap: '1.5rem' 
+}}>
+
+<div>
                       <div style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>Market Cap</div>
                       <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{formatMarketCap(stockData.MarketCapitalization)}</div>
                     </div>
@@ -673,7 +676,9 @@ const toggleWatchlist = async () => {
                 </h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
                   <MetricCard label="EPS (Earnings Per Share)" value={`$${stockData.EPS}`} />
-                  <MetricCard label="Revenue Growth (YoY)" value={formatPercent(stockData.QuarterlyRevenueGrowthYOY || 0)} />
+                 
+<MetricCard label="Revenue Per Share" value={`$${stockData.revenuePerShareTTM || 'N/A'}`} />
+
                   <MetricCard label="Profit Margin" value={formatPercent(stockData.ProfitMargin || 0)} />
                   <MetricCard label="Debt-to-Equity Ratio" value={stockData.DebtToEquity} />
                   <MetricCard label="ROE (Return on Equity)" value={formatPercent(stockData.ReturnOnEquityTTM || 0)} />
