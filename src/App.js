@@ -26,55 +26,49 @@ function App() {
   const [priceData, setPriceData] = useState(null);
   const [priceLoading, setPriceLoading] = useState(false);
   const [selectedTimeframe, setSelectedTimeframe] = useState('daily');
-const [liveIndices, setLiveIndices] = useState(null);  
-const [indicesLoading, setIndicesLoading] = useState(false);  
-const [inWatchlist, setInWatchlist] = useState(false); 
+  const [liveIndices, setLiveIndices] = useState(null);  
+  const [indicesLoading, setIndicesLoading] = useState(false);  
+  const [inWatchlist, setInWatchlist] = useState(false); 
 
-// Set page title
   useEffect(() => {
     document.title = 'InvestorIQ - Professional Financial Analysis';
   }, []);
 
-
-
- const fetchStockData = async (symbol) => {
-  setLoading(true);
-  setError(null);
-  try {
-    // Fetch both price data and company fundamentals
-    const [priceData, companyData] = await Promise.all([
-      stockAPI.getStockData(symbol),
-      stockAPI.getCompanyInfo(symbol)
-    ]);
-    
-    // Merge the data
-    const mergedData = {
-      ...priceData,
-      ...companyData,
-      // Map company API fields to what the display expects
-Symbol: priceData.symbol,
-  CurrentPrice: priceData.currentPrice,
-  High: companyData.week52High,  
-  Low: companyData.week52Low,    
-      MarketCapitalization: companyData.marketCap,
-      PERatio: companyData.peRatio,
-      EPS: companyData.eps,
-      ProfitMargin: companyData.profitMargin,
-      DebtToEquity: companyData.debtToEquity,
-      ReturnOnEquityTTM: companyData.roe,
-      DividendYield: companyData.dividendYield,
-      CurrentRatio: companyData.currentRatio,
-      BookValue: companyData.bookValue
-    };
-    
-    setStockData(mergedData);
-  } catch (err) {
-    setError(err.message);
-    setStockData(getDemoStockData(symbol));
-  } finally {
-    setLoading(false);
-  }
-};
+  const fetchStockData = async (symbol) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [priceData, companyData] = await Promise.all([
+        stockAPI.getStockData(symbol),
+        stockAPI.getCompanyInfo(symbol)
+      ]);
+      
+      const mergedData = {
+        ...priceData,
+        ...companyData,
+        Symbol: priceData.symbol,
+        CurrentPrice: priceData.currentPrice,
+        High: companyData.week52High,  
+        Low: companyData.week52Low,    
+        MarketCapitalization: companyData.marketCap,
+        PERatio: companyData.peRatio,
+        EPS: companyData.eps,
+        ProfitMargin: companyData.profitMargin,
+        DebtToEquity: companyData.debtToEquity,
+        ReturnOnEquityTTM: companyData.roe,
+        DividendYield: companyData.dividendYield,
+        CurrentRatio: companyData.currentRatio,
+        BookValue: companyData.bookValue
+      };
+      
+      setStockData(mergedData);
+    } catch (err) {
+      setError(err.message);
+      setStockData(getDemoStockData(symbol));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchFREDData = async () => {
     setFredLoading(true);
@@ -101,71 +95,70 @@ Symbol: priceData.symbol,
     }
   };
 
-const fetchLiveIndices = async () => {
-  setIndicesLoading(true);
-  try {
-    const data = await marketAPI.getLiveIndices();
-    setLiveIndices(data);
-  } catch (err) {
-    console.error('Failed to fetch live indices:', err);
-  } finally {
-    setIndicesLoading(false);
-  }
-};
-
-// ← ADD THESE NEW FUNCTIONS HERE
-const checkWatchlist = async (symbol) => {
-  if (!isAuthenticated || !user) {
-    setInWatchlist(false);
-    return;
-  }
-  
-  try {
-    const result = await watchlistAPI.checkWatchlist(user.id, symbol);
-    setInWatchlist(result.inWatchlist);
-  } catch (err) {
-    console.error('Failed to check watchlist:', err);
-    setInWatchlist(false);
-  }
-};
-
-const toggleWatchlist = async () => {
-  if (!isAuthenticated || !user) {
-    alert('Please log in to use the watchlist feature');
-    setShowAuth(true);
-    return;
-  }
-
-  try {
-    if (inWatchlist) {
-      await watchlistAPI.removeFromWatchlist(user.id, selectedStock);
-      setInWatchlist(false);
-      alert(`${selectedStock} removed from watchlist`);
-    } else {
-      await watchlistAPI.addToWatchlist(user.id, selectedStock);
-      setInWatchlist(true);
-      alert(`${selectedStock} added to watchlist`);
+  const fetchLiveIndices = async () => {
+    setIndicesLoading(true);
+    try {
+      const data = await marketAPI.getLiveIndices();
+      setLiveIndices(data);
+    } catch (err) {
+      console.error('Failed to fetch live indices:', err);
+    } finally {
+      setIndicesLoading(false);
     }
-  } catch (err) {
-    console.error('Failed to toggle watchlist:', err);
-    alert('Failed to update watchlist');
-  }
-};
+  };
 
- useEffect(() => {
-  if (activeTab === 'company') {
-    fetchStockData(selectedStock);
-    fetchPriceData(selectedStock, selectedTimeframe);
-    checkWatchlist(selectedStock);
-  }
-}, [selectedStock, activeTab, selectedTimeframe, user]);
+  const checkWatchlist = async (symbol) => {
+    if (!isAuthenticated || !user) {
+      setInWatchlist(false);
+      return;
+    }
+    
+    try {
+      const result = await watchlistAPI.checkWatchlist(user.id, symbol);
+      setInWatchlist(result.inWatchlist);
+    } catch (err) {
+      console.error('Failed to check watchlist:', err);
+      setInWatchlist(false);
+    }
+  };
+
+  const toggleWatchlist = async () => {
+    if (!isAuthenticated || !user) {
+      alert('Please log in to use the watchlist feature');
+      setShowAuth(true);
+      return;
+    }
+
+    try {
+      if (inWatchlist) {
+        await watchlistAPI.removeFromWatchlist(user.id, selectedStock);
+        setInWatchlist(false);
+        alert(`${selectedStock} removed from watchlist`);
+      } else {
+        await watchlistAPI.addToWatchlist(user.id, selectedStock);
+        setInWatchlist(true);
+        alert(`${selectedStock} added to watchlist`);
+      }
+    } catch (err) {
+      console.error('Failed to toggle watchlist:', err);
+      alert('Failed to update watchlist');
+    }
+  };
 
   useEffect(() => {
-  if (activeTab === 'market') {
-    if (!fredData) fetchFREDData();
-    if (!liveIndices) fetchLiveIndices();
-  }
-}, [activeTab]);
+    if (activeTab === 'company') {
+      fetchStockData(selectedStock);
+      fetchPriceData(selectedStock, selectedTimeframe);
+      checkWatchlist(selectedStock);
+    }
+  }, [selectedStock, activeTab, selectedTimeframe, user]);
+
+  useEffect(() => {
+    if (activeTab === 'market') {
+      if (!fredData) fetchFREDData();
+      if (!liveIndices) fetchLiveIndices();
+    }
+  }, [activeTab]);
 
   const getDemoStockData = (symbol) => {
     return {
@@ -190,9 +183,9 @@ const toggleWatchlist = async () => {
     return `$${num}`;
   };
 
- const formatPercent = (value) => {
-  return `${parseFloat(value).toFixed(2)}%`;
-};
+  const formatPercent = (value) => {
+    return `${parseFloat(value).toFixed(2)}%`;
+  };
 
   const stockCategories = {
     'Tech Giants': ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'NVDA'],
@@ -204,105 +197,95 @@ const toggleWatchlist = async () => {
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%)', color: 'white', fontFamily: 'system-ui' }}>
-      
-
-
-<div style={{ background: 'rgba(30, 41, 59, 0.5)', borderBottom: '1px solid #334155', padding: '0.75rem 1rem' }}>
-  <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-      {/* Logo and Title Row */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <img 
-          src="/images/offbeet-logo.jpeg" 
-          alt="Offbeet Tech Logo" 
-          style={{ width: '40px', height: '40px', objectFit: 'contain' }}
-        />
-        <div style={{ flex: 1 }}>
-          <h1 style={{ margin: 0, fontSize: '1.25rem' }}>InvestorIQ</h1>
-          <p style={{ margin: 0, fontSize: '0.7rem', color: '#94a3b8' }}>
-            by <span style={{ color: '#60a5fa', fontWeight: '600' }}>Offbeet Media and Tech Inc.</span>
-          </p>
+      <div style={{ background: 'rgba(30, 41, 59, 0.5)', borderBottom: '1px solid #334155', padding: '0.75rem 1rem' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <img 
+                src="/images/offbeet-logo.jpeg" 
+                alt="Offbeet Tech Logo" 
+                style={{ width: '40px', height: '40px', objectFit: 'contain' }}
+              />
+              <div style={{ flex: 1 }}>
+                <h1 style={{ margin: 0, fontSize: '1.25rem' }}>InvestorIQ</h1>
+                <p style={{ margin: 0, fontSize: '0.7rem', color: '#94a3b8' }}>
+                  by <span style={{ color: '#60a5fa', fontWeight: '600' }}>Offbeet Media and Tech Inc.</span>
+                </p>
+              </div>
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              {isAuthenticated ? (
+                <>
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem', 
+                    padding: '0.5rem 0.75rem', 
+                    background: 'rgba(59, 130, 246, 0.1)', 
+                    borderRadius: '0.5rem', 
+                    border: '1px solid rgba(59, 130, 246, 0.3)',
+                    flex: 1,
+                    overflow: 'hidden'
+                  }}>
+                    <User size={16} color="#60a5fa" />
+                    <span style={{ fontSize: '0.75rem', color: '#60a5fa', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {user?.email}
+                    </span>
+                  </div>
+                  <button
+                    onClick={logout}
+                    style={{
+                      padding: '0.5rem 0.75rem',
+                      background: '#475569',
+                      border: 'none',
+                      borderRadius: '0.5rem',
+                      color: 'white',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      fontSize: '0.75rem',
+                      fontWeight: '500',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    <LogOut size={14} />
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setShowAuth(true)}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 1rem',
+                    background: '#2563eb',
+                    border: 'none',
+                    borderRadius: '0.5rem',
+                    color: 'white',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    fontSize: '0.875rem',
+                    fontWeight: '600'
+                  }}
+                >
+                  <LogIn size={16} />
+                  Login / Sign Up
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
-      
-      {/* Auth Button Row - Full Width on Mobile */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        {isAuthenticated ? (
-          <>
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '0.5rem', 
-              padding: '0.5rem 0.75rem', 
-              background: 'rgba(59, 130, 246, 0.1)', 
-              borderRadius: '0.5rem', 
-              border: '1px solid rgba(59, 130, 246, 0.3)',
-              flex: 1,
-              overflow: 'hidden'
-            }}>
-              <User size={16} color="#60a5fa" />
-              <span style={{ fontSize: '0.75rem', color: '#60a5fa', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {user?.email}
-              </span>
-            </div>
-            <button
-              onClick={logout}
-              style={{
-                padding: '0.5rem 0.75rem',
-                background: '#475569',
-                border: 'none',
-                borderRadius: '0.5rem',
-                color: 'white',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                fontSize: '0.75rem',
-                fontWeight: '500',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              <LogOut size={14} />
-              Logout
-            </button>
-          </>
-        ) : (
-          <button
-            onClick={() => setShowAuth(true)}
-            style={{
-              width: '100%',
-              padding: '0.75rem 1rem',
-              background: '#2563eb',
-              border: 'none',
-              borderRadius: '0.5rem',
-              color: 'white',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem',
-              fontSize: '0.875rem',
-              fontWeight: '600'
-            }}
-          >
-            <LogIn size={16} />
-            Login / Sign Up
-          </button>
-        )}
-      </div>
-    </div>
-  </div>
-</div>
-
-
 
       <div style={{ maxWidth: '1200px', margin: '1rem auto', padding: '0 1rem' }}>
-
         <div className="tabs-container tab-scroll-container" style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid #334155', marginBottom: '2rem' }}>
-
           {['market', 'company', 'portfolio', 'watchlist', 'education', 'settings'].map(tab => (
-           
- <button
+            <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               style={{
@@ -323,10 +306,8 @@ const toggleWatchlist = async () => {
 
         {activeTab === 'market' && (
           <div>
-            {/* Market Dashboard */}
             <MarketDashboard currentIndicators={fredData} />
 
-            {/* Federal Reserve & Economic Indicators */}
             <div style={{ background: 'rgba(30, 41, 59, 0.5)', backdropFilter: 'blur(10px)', borderRadius: '0.75rem', padding: '1.5rem', border: '1px solid #334155', marginBottom: '2rem', marginTop: '2rem' }}>
               <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Activity size={28} color="#60a5fa" />
@@ -367,10 +348,8 @@ const toggleWatchlist = async () => {
                       { key: 'GDP Growth', description: 'Quarterly economic growth rate (annualized)', format: (v) => `${v.toFixed(1)}%` },
                       { key: '10-Year Treasury', description: 'U.S. government 10-year bond yield', format: (v) => `${v.toFixed(2)}%` },
                       { key: 'Consumer Confidence', description: 'Index measuring consumer optimism', format: (v) => v.toFixed(1) },
-{ key: 'Retail Sales', description: 'Monthly retail and food services sales', format: (v) => `$${(v / 1000).toFixed(0)}B` },
-  { key: 'Housing Starts', description: 'New residential construction starts', format: (v) => `${v.toFixed(0)}K` }
-
-
+                      { key: 'Retail Sales', description: 'Monthly retail and food services sales', format: (v) => `$${(v / 1000).toFixed(0)}B` },
+                      { key: 'Housing Starts', description: 'New residential construction starts', format: (v) => `${v.toFixed(0)}K` }
                     ].map((config, idx) => {
                       const indicator = fredData[config.key];
                       if (!indicator) return null;
@@ -407,85 +386,86 @@ const toggleWatchlist = async () => {
               </div>
             </div>
 
+            <div style={{ background: 'rgba(30, 41, 59, 0.5)', backdropFilter: 'blur(10px)', borderRadius: '0.75rem', padding: '1.5rem', border: '1px solid #334155', marginBottom: '2rem' }}>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <TrendingUp size={28} color="#34d399" />
+                Major Market Indices
+                <button
+                  onClick={fetchLiveIndices}
+                  disabled={indicesLoading}
+                  style={{
+                    marginLeft: 'auto',
+                    padding: '0.5rem 1rem',
+                    background: '#059669',
+                    border: 'none',
+                    borderRadius: '0.5rem',
+                    color: 'white',
+                    cursor: indicesLoading ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  {indicesLoading ? <Loader size={16} className="spin" /> : <RefreshCw size={16} />}
+                  Refresh
+                </button>
+              </h2>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                {indicesLoading ? (
+                  <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'center', padding: '3rem' }}>
+                    <Loader size={48} color="#60a5fa" className="spin" />
+                  </div>
+                ) : liveIndices && Object.keys(liveIndices).length > 0 ? (
+                  Object.values(liveIndices).map((index, idx) => {
+                    const isUp = parseFloat(index.changePercent) >= 0;
+                    const needsDollar = ['Crude Oil', 'Gold', 'Bitcoin'].includes(index.name);
+                    
+                    return (
+                      <div key={idx} style={{ background: 'linear-gradient(135deg, rgba(51, 65, 85, 0.8) 0%, rgba(30, 41, 59, 0.8) 100%)', borderRadius: '0.5rem', padding: '1.25rem', border: '1px solid #475569' }}>
+                        <h3 style={{ fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.75rem', fontWeight: '500' }}>{index.name}</h3>
+                        
+                        <div style={{ fontSize: '1.75rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                          {index.price ? (needsDollar ? `$${index.price.toFixed(2)}` : index.price.toFixed(2)) : 'N/A'}
+                        </div>
 
-{/* Major Market Indices */}
-<div style={{ background: 'rgba(30, 41, 59, 0.5)', backdropFilter: 'blur(10px)', borderRadius: '0.75rem', padding: '1.5rem', border: '1px solid #334155', marginBottom: '2rem' }}>
-  <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-    <TrendingUp size={28} color="#34d399" />
-    Major Market Indices
-    <button
-      onClick={fetchLiveIndices}
-      disabled={indicesLoading}
-      style={{
-        marginLeft: 'auto',
-        padding: '0.5rem 1rem',
-        background: '#059669',
-        border: 'none',
-        borderRadius: '0.5rem',
-        color: 'white',
-        cursor: indicesLoading ? 'not-allowed' : 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.5rem',
-        fontSize: '0.875rem'
-      }}
-    >
-      {indicesLoading ? <Loader size={16} className="spin" /> : <RefreshCw size={16} />}
-      Refresh
-    </button>
-  </h2>
-  
-  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-    {indicesLoading ? (
-      <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'center', padding: '3rem' }}>
-        <Loader size={48} color="#60a5fa" className="spin" />
-      </div>
-    ) : liveIndices && Object.keys(liveIndices).length > 0 ? (
-      Object.values(liveIndices).map((index, idx) => (
-        <div key={idx} style={{ background: 'linear-gradient(135deg, rgba(51, 65, 85, 0.8) 0%, rgba(30, 41, 59, 0.8) 100%)', borderRadius: '0.5rem', padding: '1.25rem', border: '1px solid #475569' }}>
-          <h3 style={{ fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.75rem', fontWeight: '500' }}>{index.name}</h3>
-          
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: isUp ? '#34d399' : '#f87171', fontWeight: '600' }}>
+                          {isUp ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+                          <span>{isUp ? '+' : ''}{parseFloat(index.changePercent).toFixed(2)}%</span>
+                          <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>
+                            ({isUp ? '+' : ''}{parseFloat(index.change).toFixed(2)})
+                          </span>
+                        </div>
+                        <p style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '0.5rem', margin: 0 }}>
+                          Updated: Live
+                        </p>
+                      </div>
+                    );
+                  })
+                ) : (
+                  [
+                    { name: 'S&P 500', value: '4,567.89', change: '+1.2%', points: '+54.32', status: 'up' },
+                    { name: 'Dow Jones', value: '35,421.32', change: '+0.8%', points: '+281.45', status: 'up' },
+                    { name: 'NASDAQ', value: '14,238.76', change: '+1.5%', points: '+210.89', status: 'up' }
+                  ].map((index, idx) => (
+                    <div key={idx} style={{ background: 'linear-gradient(135deg, rgba(51, 65, 85, 0.8) 0%, rgba(30, 41, 59, 0.8) 100%)', borderRadius: '0.5rem', padding: '1.25rem', border: '1px solid #475569' }}>
+                      <h3 style={{ fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.75rem', fontWeight: '500' }}>{index.name}</h3>
+                      <div style={{ fontSize: '1.75rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>{index.value}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: index.status === 'up' ? '#34d399' : '#f87171', fontWeight: '600' }}>
+                        {index.status === 'up' ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+                        <span>{index.change}</span>
+                        <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>({index.points})</span>
+                      </div>
+                      <p style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '0.5rem', margin: 0 }}>
+                        Static fallback data
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
 
-<div style={{ fontSize: '1.75rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-  {['Crude Oil', 'Gold', 'Bitcoin'].includes(index.name) ? `$${index.value}` : index.value}
-</div>
-
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: index.status === 'up' ? '#34d399' : '#f87171', fontWeight: '600' }}>
-            {index.status === 'up' ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-            <span>{parseFloat(index.change) > 0 ? '+' : ''}{parseFloat(index.change).toFixed(2)}%</span>
-            <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>({index.points})</span>
-          </div>
-          <p style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '0.5rem', margin: 0 }}>
-            Updated: {index.lastUpdated || 'Live'}
-          </p>
-        </div>
-      ))
-    ) : (
-      // Fallback to static data if API fails
-      [
-        { name: 'S&P 500', value: '4,567.89', change: '+1.2%', points: '+54.32', status: 'up' },
-        { name: 'Dow Jones', value: '35,421.32', change: '+0.8%', points: '+281.45', status: 'up' },
-        { name: 'NASDAQ', value: '14,238.76', change: '+1.5%', points: '+210.89', status: 'up' }
-      ].map((index, idx) => (
-        <div key={idx} style={{ background: 'linear-gradient(135deg, rgba(51, 65, 85, 0.8) 0%, rgba(30, 41, 59, 0.8) 100%)', borderRadius: '0.5rem', padding: '1.25rem', border: '1px solid #475569' }}>
-          <h3 style={{ fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.75rem', fontWeight: '500' }}>{index.name}</h3>
-          <div style={{ fontSize: '1.75rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>{index.value}</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: index.status === 'up' ? '#34d399' : '#f87171', fontWeight: '600' }}>
-            {index.status === 'up' ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-            <span>{index.change}</span>
-            <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>({index.points})</span>
-          </div>
-          <p style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '0.5rem', margin: 0 }}>
-            Static fallback data
-          </p>
-        </div>
-      ))
-    )}
-  </div>
-</div>
-
-            {/* Market Summary */}
             <div style={{ background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '0.75rem', padding: '1.5rem' }}>
               <div style={{ display: 'flex', gap: '1rem', alignItems: 'start' }}>
                 <AlertCircle size={24} color="#60a5fa" style={{ flexShrink: 0, marginTop: '0.25rem' }} />
@@ -574,36 +554,37 @@ const toggleWatchlist = async () => {
             )}
 
             {stockData && (
-  <div>
-    <div style={{ background: 'linear-gradient(to right, #2563eb, #1e40af)', borderRadius: '0.75rem', padding: '2rem', marginBottom: '2rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
-        <h2 style={{ fontSize: '2rem', margin: 0 }}>{stockData.Name}</h2>
-        <button
-          onClick={toggleWatchlist}
-          style={{
-            padding: '0.75rem',
-            background: inWatchlist ? 'rgba(251, 191, 36, 0.2)' : 'rgba(255, 255, 255, 0.1)',
-            border: inWatchlist ? '1px solid #fbbf24' : '1px solid rgba(255, 255, 255, 0.2)',
-            borderRadius: '0.5rem',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            color: 'white',
-            fontSize: '0.875rem',
-            fontWeight: '600'
-          }}
-        >
-          <Star size={20} color={inWatchlist ? '#fbbf24' : 'white'} fill={inWatchlist ? '#fbbf24' : 'none'} />
-          {inWatchlist ? 'In Watchlist' : 'Add to Watchlist'}
-        </button>
-      </div>
-                  <div style={{ display: 'grid', 
-  gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', 
-  gap: '1.5rem' 
-}}>
-
-<div>
+              <div>
+                <div style={{ background: 'linear-gradient(to right, #2563eb, #1e40af)', borderRadius: '0.75rem', padding: '2rem', marginBottom: '2rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
+                    <h2 style={{ fontSize: '2rem', margin: 0 }}>{stockData.Name}</h2>
+                    <button
+                      onClick={toggleWatchlist}
+                      style={{
+                        padding: '0.75rem',
+                        background: inWatchlist ? 'rgba(251, 191, 36, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+                        border: inWatchlist ? '1px solid #fbbf24' : '1px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: '0.5rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        color: 'white',
+                        fontSize: '0.875rem',
+                        fontWeight: '600'
+                      }}
+                    >
+                      <Star size={20} color={inWatchlist ? '#fbbf24' : 'white'} fill={inWatchlist ? '#fbbf24' : 'none'} />
+                      {inWatchlist ? 'In Watchlist' : 'Add to Watchlist'}
+                    </button>
+                  </div>
+                  
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', 
+                    gap: '1.5rem' 
+                  }}>
+                    <div>
                       <div style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>Market Cap</div>
                       <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{formatMarketCap(stockData.MarketCapitalization)}</div>
                     </div>
@@ -611,24 +592,31 @@ const toggleWatchlist = async () => {
                       <div style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>P/E Ratio</div>
                       <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stockData.PERatio}</div>
                     </div>
-                    
-
-<div>
+                    <div>
                       <div style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>Symbol</div>
                       <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stockData.Symbol}</div>
                     </div>
-
+                    <div>
+                      <div style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>Current Price</div>
+                      <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
+                        ${stockData.CurrentPrice ? stockData.CurrentPrice.toFixed(2) : 'N/A'}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>52-Week High</div>
+                      <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#34d399' }}>
+                        ${stockData.High ? stockData.High.toFixed(2) : 'N/A'}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>52-Week Low</div>
+                      <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#f87171' }}>
+                        ${stockData.Low ? stockData.Low.toFixed(2) : 'N/A'}
+                      </div>
+                    </div>
                   </div>
+                </div>
 
-                  </div>
-                
-
-
-
-
-
-
-                {/* CHART SECTION */}
                 <div style={{ marginBottom: '2rem' }}>
                   <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
                     {['daily', 'weekly', 'monthly'].map((tf) => (
@@ -676,14 +664,12 @@ const toggleWatchlist = async () => {
                 </h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
                   <MetricCard label="EPS (Earnings Per Share)" value={`$${stockData.EPS}`} />
-                 
-<MetricCard label="Revenue Per Share" value={`$${stockData.revenuePerShareTTM || 'N/A'}`} />
-
+                  <MetricCard label="Revenue Per Share" value={`$${stockData.revenuePerShareTTM || 'N/A'}`} />
                   <MetricCard label="Profit Margin" value={formatPercent(stockData.ProfitMargin || 0)} />
-                  <MetricCard label="Debt-to-Equity Ratio" value={stockData.DebtToEquity} />
+                  <MetricCard label="Debt-to-Equity Ratio" value={stockData.DebtToEquity > 0 ? stockData.DebtToEquity : 'N/A'} />
                   <MetricCard label="ROE (Return on Equity)" value={formatPercent(stockData.ReturnOnEquityTTM || 0)} />
                   <MetricCard label="Dividend Yield" value={formatPercent(stockData.DividendYield || 0)} />
-                  <MetricCard label="Current Ratio" value={stockData.CurrentRatio} />
+                  <MetricCard label="Current Ratio" value={stockData.CurrentRatio > 0 ? stockData.CurrentRatio : 'N/A'} />
                   <MetricCard label="Book Value" value={`$${stockData.BookValue || 'N/A'}`} />
                 </div>
               </div>
@@ -691,48 +677,40 @@ const toggleWatchlist = async () => {
           </div>
         )}
 
+        {activeTab === 'watchlist' && (
+          <div>
+            <Watchlist 
+              user={user} 
+              onStockClick={(symbol) => {
+                setSelectedStock(symbol);
+                setActiveTab('company');
+              }}
+            />
+          </div>
+        )}
 
-{activeTab === 'watchlist' && (
-  <div>
-    <Watchlist 
-      user={user} 
-      onStockClick={(symbol) => {
-        setSelectedStock(symbol);
-        setActiveTab('company');
-      }}
-    />
-  </div>
-)}
-
-{activeTab === 'portfolio' && (
-  <div>
-    <Portfolio user={user} />
-  </div>
-)}
-
-{activeTab === 'education' && (
-  <Education fredData={fredData} />
-)}
+        {activeTab === 'portfolio' && (
+          <div>
+            <Portfolio user={user} />
+          </div>
+        )}
 
         {activeTab === 'education' && (
           <Education fredData={fredData} />
         )}
 
         {activeTab === 'settings' && (
-  <div>
-    <SchedulerAdmin />
-    
-    {/* Add Email Alerts Section */}
-    <div style={{ marginTop: '2rem' }}>
-      <Alerts user={user} />
-    </div>
-  </div>
-)}
-     </div>
+          <div>
+            <SchedulerAdmin />
+            <div style={{ marginTop: '2rem' }}>
+              <Alerts user={user} />
+            </div>
+          </div>
+        )}
+      </div>
 
       {showAuth && <Auth onClose={() => setShowAuth(false)} />}
 
-      {/* Footer */}
       <footer style={{ 
         background: 'rgba(15, 23, 42, 0.95)', 
         borderTop: '1px solid #334155', 
@@ -741,7 +719,6 @@ const toggleWatchlist = async () => {
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem', marginBottom: '2rem' }}>
-            {/* Company Info */}
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
                 <img 
@@ -766,7 +743,6 @@ const toggleWatchlist = async () => {
             </div>
           </div>
 
-          {/* Bottom Bar */}
           <div style={{ 
             borderTop: '1px solid #334155', 
             paddingTop: '1.5rem',
@@ -784,7 +760,6 @@ const toggleWatchlist = async () => {
             </p>
           </div>
 
-          {/* Disclaimer */}
           <div style={{ 
             marginTop: '1.5rem', 
             padding: '1rem', 
