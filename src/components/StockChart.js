@@ -11,6 +11,12 @@ const StockChart = ({ priceData, performance, symbol, timeframe }) => {
     );
   }
 
+  // Calculate high/low from price data
+  const prices = priceData.map(d => d.high || d.close);
+  const lows = priceData.map(d => d.low || d.close);
+  const periodHigh = Math.max(...prices);
+  const periodLow = Math.min(...lows);
+
   // Format data for chart
   const chartData = priceData.map(item => ({
     date: item.date || item.timestamp,
@@ -57,7 +63,9 @@ const StockChart = ({ priceData, performance, symbol, timeframe }) => {
             border: '1px solid #475569'
           }}>
             <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>Current Price</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>${performance.current}</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
+              ${performance.lastPrice || performance.current || 'N/A'}
+            </div>
           </div>
 
           <div style={{
@@ -70,13 +78,13 @@ const StockChart = ({ priceData, performance, symbol, timeframe }) => {
             <div style={{
               fontSize: '1.5rem',
               fontWeight: 'bold',
-              color: performance.change >= 0 ? '#34d399' : '#f87171',
+              color: parseFloat(performance.change) >= 0 ? '#34d399' : '#f87171',
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem'
             }}>
-              {performance.change >= 0 ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
-              {performance.change >= 0 ? '+' : ''}{performance.changePercent}%
+              {parseFloat(performance.change) >= 0 ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
+              {parseFloat(performance.change) >= 0 ? '+' : ''}{performance.changePercent}%
             </div>
           </div>
 
@@ -87,7 +95,9 @@ const StockChart = ({ priceData, performance, symbol, timeframe }) => {
             border: '1px solid #475569'
           }}>
             <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>High</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#34d399' }}>${performance.high}</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#34d399' }}>
+              ${periodHigh ? periodHigh.toFixed(2) : 'N/A'}
+            </div>
           </div>
 
           <div style={{
@@ -97,7 +107,9 @@ const StockChart = ({ priceData, performance, symbol, timeframe }) => {
             border: '1px solid #475569'
           }}>
             <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>Low</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#f87171' }}>${performance.low}</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#f87171' }}>
+              ${periodLow ? periodLow.toFixed(2) : 'N/A'}
+            </div>
           </div>
         </div>
       )}

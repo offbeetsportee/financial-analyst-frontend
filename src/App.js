@@ -52,6 +52,10 @@ const [inWatchlist, setInWatchlist] = useState(false);
       ...priceData,
       ...companyData,
       // Map company API fields to what the display expects
+Symbol: priceData.symbol,
+  CurrentPrice: priceData.currentPrice,
+  High: companyData.week52High,  
+  Low: companyData.week52Low,    
       MarketCapitalization: companyData.marketCap,
       PERatio: companyData.peRatio,
       EPS: companyData.eps,
@@ -604,12 +608,22 @@ const toggleWatchlist = async () => {
                       <div style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>P/E Ratio</div>
                       <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stockData.PERatio}</div>
                     </div>
-                    <div>
+                    
+
+<div>
                       <div style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>Symbol</div>
                       <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stockData.Symbol}</div>
                     </div>
+
                   </div>
-                </div>
+
+                  </div>
+                
+
+
+
+
+
 
                 {/* CHART SECTION */}
                 <div style={{ marginBottom: '2rem' }}>
