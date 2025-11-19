@@ -12,6 +12,7 @@ import Alerts from './components/Alerts';
 import Portfolio from './components/Portfolio';
 import StockSearch from './components/StockSearch';
 import StockComparison from './components/StockComparison';
+import Preferences from './components/Preferences';
 import './App.css';
 
 function App() {
@@ -722,15 +723,29 @@ function App() {
           <Education fredData={fredData} />
         )}
 
-        {activeTab === 'settings' && (
-          <div>
-            <SchedulerAdmin />
-            <div style={{ marginTop: '2rem' }}>
-              <Alerts user={user} />
-            </div>
-          </div>
-        )}
-      </div>
+       {activeTab === 'settings' && (
+  <div>
+    <Preferences 
+      user={user}
+      onPreferencesChange={(prefs) => {
+        // Apply preferences immediately
+        if (prefs.default_timeframe) {
+          setSelectedTimeframe(prefs.default_timeframe);
+        }
+      }}
+    />
+    
+    <div style={{ marginTop: '2rem' }}>
+      <SchedulerAdmin />
+    </div>
+    
+    <div style={{ marginTop: '2rem' }}>
+      <Alerts user={user} />
+    </div>
+  </div>
+)}
+      
+</div>
 
       {showAuth && <Auth onClose={() => setShowAuth(false)} />}
 

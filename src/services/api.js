@@ -288,3 +288,28 @@ export const portfolioAPI = {
     return response.json();
   }
 };
+
+export const preferencesAPI = {
+  getPreferences: async (userId) => {
+    const response = await fetch(`${API_URL}/preferences`, {
+      headers: {
+        'x-user-id': userId
+      }
+    });
+    if (!response.ok) throw new Error('Failed to fetch preferences');
+    return response.json();
+  },
+
+  updatePreferences: async (userId, preferences) => {
+    const response = await fetch(`${API_URL}/preferences`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': userId
+      },
+      body: JSON.stringify(preferences)
+    });
+    if (!response.ok) throw new Error('Failed to update preferences');
+    return response.json();
+  }
+};
