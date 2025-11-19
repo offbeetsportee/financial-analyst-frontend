@@ -10,7 +10,6 @@ export const stockAPI = {
     return response.json();
   },
 
-// ADD THIS NEW METHOD ⬇️
   getCompanyInfo: async (symbol) => {
     const response = await fetch(`${API_URL}/stocks/${symbol}/company`);
     if (!response.ok) throw new Error('Failed to fetch company info');
@@ -29,6 +28,13 @@ export const stockAPI = {
       const error = await response.json();
       throw new Error(error.error || 'Failed to fetch price data');
     }
+    return response.json();
+  },
+
+  // NEW: Search stocks by symbol or name
+  searchStocks: async (query) => {
+    const response = await fetch(`${API_URL}/stocks/search?q=${encodeURIComponent(query)}`);
+    if (!response.ok) throw new Error('Search failed');
     return response.json();
   }
 };
@@ -261,7 +267,7 @@ export const portfolioAPI = {
     return response.json();
   },
 
-getPerformance: async (userId, portfolioId, days = 365) => {
+  getPerformance: async (userId, portfolioId, days = 365) => {
     const response = await fetch(`${API_URL}/portfolio/${portfolioId}/performance?days=${days}`, {
       headers: {
         'x-user-id': userId
@@ -282,4 +288,3 @@ getPerformance: async (userId, portfolioId, days = 365) => {
     return response.json();
   }
 };
-  
