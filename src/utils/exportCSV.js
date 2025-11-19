@@ -41,14 +41,14 @@ export const exportToCSV = (data, filename) => {
 export const formatPortfolioForExport = (holdings) => {
   return holdings.map(holding => ({
     Symbol: holding.symbol,
-    Shares: holding.total_shares,
-    'Average Cost': holding.average_cost.toFixed(2),
-    'Total Cost': holding.total_cost.toFixed(2),
-    'Current Price': holding.currentPrice?.toFixed(2) || 'N/A',
-    'Market Value': holding.marketValue?.toFixed(2) || 'N/A',
-    'Gain/Loss': holding.gainLoss?.toFixed(2) || 'N/A',
-    'Gain/Loss %': holding.gainLossPercent?.toFixed(2) || 'N/A',
-    'Portfolio %': holding.portfolioPercent?.toFixed(2) || 'N/A'
+    Shares: parseFloat(holding.total_shares || 0).toFixed(6),
+    'Average Cost': parseFloat(holding.average_cost || 0).toFixed(2),
+    'Total Cost': parseFloat(holding.total_cost || 0).toFixed(2),
+    'Current Price': holding.currentPrice ? parseFloat(holding.currentPrice).toFixed(2) : 'N/A',
+    'Market Value': holding.marketValue ? parseFloat(holding.marketValue).toFixed(2) : 'N/A',
+    'Gain/Loss': holding.gainLoss ? parseFloat(holding.gainLoss).toFixed(2) : 'N/A',
+    'Gain/Loss %': holding.gainLossPercent ? parseFloat(holding.gainLossPercent).toFixed(2) : 'N/A',
+    'Portfolio %': holding.portfolioPercent ? parseFloat(holding.portfolioPercent).toFixed(2) : 'N/A'
   }));
 };
 
