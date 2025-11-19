@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown, DollarSign, Activity, BarChart3, AlertCircle, ChevronDown, ChevronUp, RefreshCw, Loader, LogIn, LogOut, User, Star } from 'lucide-react';
-import { stockAPI, marketAPI, watchlistAPI, alertsAPI, portfolioAPI } from './services/api';
+import { stockAPI, marketAPI, watchlistAPI, alertsAPI, portfolioAPI, preferencesAPI } from './services/api';
 import { useAuth } from './context/AuthContext';
 import Auth from './components/Auth';
 import StockChart from './components/StockChart';
@@ -18,7 +18,9 @@ import './App.css';
 function App() {
   const { user, logout, isAuthenticated } = useAuth();
   const [showAuth, setShowAuth] = useState(false);
-  const [activeTab, setActiveTab] = useState('market');
+ const [activeTab, setActiveTab] = useState(null);  // Start as null
+const [preferencesLoaded, setPreferencesLoaded] = useState(false);
+const [userPreferences, setUserPreferences] = useState(null);
   const [selectedStock, setSelectedStock] = useState('AAPL');
   const [expandedSection, setExpandedSection] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -36,6 +38,42 @@ function App() {
   useEffect(() => {
     document.title = 'InvestorIQ - Professional Financial Analysis';
   }, []);
+
+// Load user preferences on login
+useEffect(() => {
+  const loadPreferences = async () => {
+    if (user && isAuthenticated) {
+      try {
+        const prefs = await preferencesAPI.getPreferences(user.id);
+        setUserPreferences(prefs);
+        
+        // Apply default tab
+        if (prefs.default_tab) {
+          setActiveTab(prefs.default_tab);
+        } else {
+          setActiveTab('market');  // Fallback to market
+        }
+        
+        // Apply default timeframe
+        if (prefs.default_timeframe) {
+          setSelectedTimeframe(prefs.default_timeframe);
+        }
+        
+        setPreferencesLoaded(true);
+      } catch (error) {
+        console.error('Failed to load preferences:', error);
+        setActiveTab('market');  // Fallback on error
+        setPreferencesLoaded(true);
+      }
+    } else {
+      // Not logged in, default to market
+      setActiveTab('market');
+      setPreferencesLoaded(true);
+    }
+  };
+  
+  loadPreferences();
+}, [user?.id, isAuthenticated]);
 
   const fetchStockData = async (symbol) => {
     setLoading(true);
