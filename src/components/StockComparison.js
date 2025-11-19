@@ -3,6 +3,7 @@ import { BarChart3, Plus, X, TrendingUp, TrendingDown, Loader, DollarSign } from
 import { stockAPI } from '../services/api';
 import StockSearch from './StockSearch';
 import { Bar } from 'react-chartjs-2';
+import MobileTable from './MobileTable';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -286,16 +287,13 @@ const StockComparison = () => {
       {/* Comparison Table */}
       {selectedStocks.length >= 2 ? (
         <>
-          <div style={{ 
-            background: 'rgba(30, 41, 59, 0.5)', 
-            border: '1px solid #334155', 
-            borderRadius: '0.75rem', 
-            overflow: 'hidden',
-            marginBottom: '2rem'
-          }}>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
-                <thead>
+          
+
+<MobileTable>
+  <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
+                
+
+<thead>
                   <tr style={{ background: '#1e293b' }}>
                     <th style={{ 
                       padding: '1rem', 
@@ -362,9 +360,8 @@ const StockComparison = () => {
                     </tr>
                   ))}
                 </tbody>
-              </table>
-            </div>
-          </div>
+                            </table>
+            </MobileTable>
 
           {/* Chart */}
           {renderComparisonChart()}

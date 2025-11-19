@@ -333,6 +333,20 @@ useEffect(() => {
           </button>
         )}
       </div>
+
+ {/* Mobile Tip - ADD THIS */}
+      <div style={{ 
+        display: 'block',
+        fontSize: '0.7rem', 
+        color: '#64748b',
+        textAlign: 'center',
+        padding: '0.25rem'
+      }}>
+        <span style={{ display: 'inline-block' }}>
+          💡 Swipe tabs left/right
+        </span>
+      </div>
+
     </div>
   </div>
 </div>

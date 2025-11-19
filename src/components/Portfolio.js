@@ -3,6 +3,7 @@ import { Briefcase, Plus, TrendingUp, TrendingDown, Trash2, Loader, DollarSign, 
 import { Download } from 'lucide-react';
 import { exportToCSV, formatPortfolioForExport } from '../utils/exportCSV';
 import { portfolioAPI, stockAPI } from '../services/api';
+import MobileTable from './MobileTable';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -1187,11 +1188,10 @@ const renderPerformanceChart = () => {
                 <p style={{ color: '#94a3b8' }}>No holdings yet. Add your first transaction!</p>
               </div>
             ) : (
-              <div style={{ background: 'rgba(30, 41, 59, 0.5)', border: '1px solid #334155', borderRadius: '0.75rem', overflow: 'hidden' }}>
-                
-
-<table style={{ width: '100%', borderCollapse: 'collapse' }}>
-  <thead>
+             
+<MobileTable>
+    <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '900px' }}>
+      <thead>
     <tr style={{ background: '#1e293b' }}>
       <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.875rem', color: '#94a3b8', fontWeight: '600' }}>Symbol</th>
       <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem', color: '#94a3b8', fontWeight: '600' }}>Shares</th>
@@ -1259,11 +1259,14 @@ const renderPerformanceChart = () => {
         </tr>
       );
     })}
-  </tbody>
-</table>
-            </div>
-            )}
-          </div>
+  
+</tbody>
+    </table>
+  </MobileTable>
+)}
+          
+
+</div>
 
           {/* Transaction History */}
           <div>

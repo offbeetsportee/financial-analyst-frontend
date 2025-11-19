@@ -2,8 +2,39 @@
   text-align: center;
 }
 
-.spin {
-  animation: spin 1s linear infinite;
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes spin {
@@ -15,191 +46,85 @@
   }
 }
 
-/* ==================== MOBILE RESPONSIVENESS ==================== */
-
-/* Base responsive adjustments */
-* {
-  box-sizing: border-box;
+.spin {
+  animation: spin 1s linear infinite;
 }
 
-body {
-  overflow-x: hidden;
-  margin: 0;
-  padding: 0;
-}
+/* Mobile Responsiveness */
 
-/* Mobile-first responsive breakpoints */
-@media (max-width: 768px) {
-  /* Header adjustments */
-  h1 {
-    font-size: 1.25rem !important;
-  }
-  
-  h2 {
-    font-size: 1.25rem !important;
-  }
-  
-  h3 {
-    font-size: 1rem !important;
-  }
-  
-  /* Reduce padding on mobile */
-  body > div > div:first-child {
-    padding: 0.75rem 1rem !important;
-  }
-  
-  /* Logo size adjustment */
-  img[alt="Offbeet Tech Logo"] {
-    width: 36px !important;
-    height: 36px !important;
-  }
-  
-  /* Login button - make it smaller on mobile */
-  button {
-    font-size: 0.8rem !important;
-    padding: 0.5rem 1rem !important;
-  }
-  
-  /* Tab navigation - ensure horizontal scroll */
-  .tabs-container {
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    margin-bottom: 1.5rem !important;
-    border-bottom: 1px solid #334155;
-  }
-  
-  .tabs-container::-webkit-scrollbar {
-    display: none;
-  }
-  
-  /* Individual tab buttons */
-  .tabs-container button {
-    white-space: nowrap !important;
-    min-width: fit-content !important;
-    padding: 0.75rem 1rem !important;
-    font-size: 0.875rem !important;
-  }
-  
-  /* Grid layouts - force single column on mobile */
-  div[style*="grid-template-columns"] {
-    grid-template-columns: 1fr !important;
-  }
-  
-  /* Flex layouts - allow wrapping */
-  div[style*="display: flex"] {
-    flex-wrap: wrap !important;
-  }
-  
-  /* Large numbers - make them smaller on mobile */
-  div[style*="fontSize: '2rem'"] {
-    font-size: 1.5rem !important;
-  }
-  
-  div[style*="fontSize: '1.75rem'"] {
-    font-size: 1.25rem !important;
-  }
-  
-  div[style*="fontSize: '1.5rem'"] {
-    font-size: 1.125rem !important;
-  }
-  
-  /* Card padding reduction */
-  div[style*="padding: '2rem'"] {
-    padding: 1rem !important;
-  }
-  
-  div[style*="padding: '1.5rem'"] {
-    padding: 1rem !important;
-  }
-  
-  /* Gap reduction */
-  div[style*="gap: '2rem'"] {
-    gap: 1rem !important;
-  }
-  
-  div[style*="gap: '1.5rem'"] {
-    gap: 1rem !important;
-  }
-  
-  /* Market indices cards - ensure they fit */
-  div[style*="minmax(200px"] {
-    grid-template-columns: 1fr !important;
-  }
-  
-  /* Watchlist cards */
-  div[style*="minmax(300px"] {
-    grid-template-columns: 1fr !important;
-  }
-  
-  /* Stock buttons - make them smaller */
-  div[style*="flexWrap: 'wrap'"] button {
-    font-size: 0.75rem !important;
-    padding: 0.4rem 0.75rem !important;
-  }
-  
-  /* Chart container */
-  canvas {
-    max-width: 100% !important;
-    height: auto !important;
-  }
-  
-  /* Footer text */
-  footer p {
-    font-size: 0.7rem !important;
-  }
-  
-  /* Auth modal - make it full screen on mobile */
-  div[style*="position: 'fixed'"] > div[style*="background: 'white'"] {
-    width: 95vw !important;
-    max-width: 95vw !important;
-    margin: 1rem !important;
-  }
-  
-  /* Alerts form - stack inputs vertically */
-  form div[style*="grid-template-columns"] {
-    grid-template-columns: 1fr !important;
-  }
-}
-
-/* Tablet adjustments */
-@media (min-width: 769px) and (max-width: 1024px) {
-  /* Grid layouts - 2 columns on tablet */
-  div[style*="repeat(auto-fit, minmax(200px"] {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-  
-  div[style*="repeat(auto-fit, minmax(250px"] {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-  
-  div[style*="repeat(auto-fit, minmax(300px"] {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-}
-
-/* Ensure horizontal scrolling works for tabs */
+/* Horizontal scrolling for tabs */
 .tab-scroll-container {
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
 }
 
 .tab-scroll-container::-webkit-scrollbar {
-  display: none;
+  display: none; /* Chrome, Safari, Opera */
 }
 
-/* Remove default margin/padding that might cause horizontal scroll */
-html, body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  overflow-x: hidden;
+/* Prevent text selection on buttons */
+button {
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 
-/* Prevent text from causing overflow */
-p, div, span {
-  word-wrap: break-word;
-  overflow-wrap: break-word;
+/* Mobile-specific styles */
+@media (max-width: 768px) {
+  /* Reduce padding on mobile */
+  body {
+    font-size: 14px;
+  }
+
+  /* Make tabs wrap better */
+  .tabs-container button {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Ensure tables scroll horizontally */
+  .mobile-scroll-table {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Make stock buttons more touch-friendly */
+  .stock-button {
+    min-height: 44px; /* Apple's recommended touch target */
+    padding: 0.75rem 1rem !important;
+  }
+
+  /* Improve chart responsiveness */
+  canvas {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+}
+
+/* Tablet styles */
+@media (min-width: 769px) and (max-width: 1024px) {
+  body {
+    font-size: 15px;
+  }
+}
+
+/* Small mobile phones */
+@media (max-width: 375px) {
+  body {
+    font-size: 13px;
+  }
+
+  h1 {
+    font-size: 1.1rem !important;
+  }
+
+  h2 {
+    font-size: 1.3rem !important;
+  }
+
+  h3 {
+    font-size: 1.1rem !important;
+  }
 }

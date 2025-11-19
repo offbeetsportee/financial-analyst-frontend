@@ -3,6 +3,7 @@ import { Star, TrendingUp, TrendingDown, RefreshCw, Loader, AlertCircle } from '
 import { watchlistAPI } from '../services/api';
 import { Download } from 'lucide-react';
 import { exportToCSV, formatWatchlistForExport } from '../utils/exportCSV';
+import MobileTable from './MobileTable';
 
 const Watchlist = ({ user, onStockClick }) => {
   const [watchlist, setWatchlist] = useState([]);
