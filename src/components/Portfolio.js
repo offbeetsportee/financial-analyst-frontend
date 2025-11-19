@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Briefcase, Plus, TrendingUp, TrendingDown, Trash2, Loader, DollarSign, PieChart, Calendar, Upload } from 'lucide-react';
+import { Download } from 'lucide-react';
+import { exportToCSV, formatPortfolioForExport } from '../utils/exportCSV';
 import { portfolioAPI, stockAPI } from '../services/api';
 import { Line } from 'react-chartjs-2';
 import {
@@ -755,51 +757,102 @@ const renderPerformanceChart = () => {
             </div>
           </div>
 
+{/* Add Transaction & Import CSV Buttons */}
+<div style={{ marginBottom: '2rem' }}>
+  <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+    <button
+      onClick={() => setShowTransactionForm(!showTransactionForm)}
+      style={{
+        padding: '0.75rem 1.5rem',
+        background: '#2563eb',
+        border: 'none',
+        borderRadius: '0.5rem',
+        color: 'white',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.5rem',
+        fontSize: '0.875rem',
+        fontWeight: '600'
+      }}
+    >
+      <Plus size={16} />
+      Add Transaction
+    </button>
+    
+    <button
+      onClick={() => setShowImportForm(!showImportForm)}
+      style={{
+        padding: '0.75rem 1.5rem',
+        background: '#059669',
+        border: 'none',
+        borderRadius: '0.5rem',
+        color: 'white',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.5rem',
+        fontSize: '0.875rem',
+        fontWeight: '600'
+      }}
+    >
+      <Upload size={16} />
+      Import CSV
+    </button>
 
-          {/* Add Transaction & Import CSV Buttons */}
-          <div style={{ marginBottom: '2rem' }}>
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-              <button
-                onClick={() => setShowTransactionForm(!showTransactionForm)}
-                style={{
-                  padding: '0.75rem 1.5rem',
-                  background: '#2563eb',
-                  border: 'none',
-                  borderRadius: '0.5rem',
-                  color: 'white',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  fontSize: '0.875rem',
-                  fontWeight: '600'
-                }}
-              >
-                <Plus size={16} />
-                Add Transaction
-              </button>
-              
-              <button
-                onClick={() => setShowImportForm(!showImportForm)}
-                style={{
-                  padding: '0.75rem 1.5rem',
-                  background: '#059669',
-                  border: 'none',
-                  borderRadius: '0.5rem',
-                  color: 'white',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  fontSize: '0.875rem',
-                  fontWeight: '600'
-                }}
-              >
-                <Upload size={16} />
-                Import CSV
-              </button>
-            </div>
-          </div>
+    <button
+      onClick={() => {
+        if (portfolioDetails?.holdings && portfolioDetails.holdings.length > 0) {
+          const holdingsWithCalculations = portfolioDetails.holdings.map(holding => {
+            const currentPrice = currentPrices[holding.symbol] || parseFloat(holding.average_cost);
+            const shares = parseFloat(holding.total_shares);
+            const avgCost = parseFloat(holding.average_cost);
+            const totalCost = parseFloat(holding.total_cost);
+            const marketValue = shares * currentPrice;
+            const gainLoss = marketValue - totalCost;
+            const gainLossPercent = (gainLoss / totalCost) * 100;
+            const percentOfPortfolio = (marketValue / totalValue) * 100;
+            
+            return {
+              ...holding,
+              currentPrice,
+              marketValue,
+              gainLoss,
+              gainLossPercent,
+              portfolioPercent: percentOfPortfolio
+            };
+          });
+          
+          const formattedData = formatPortfolioForExport(holdingsWithCalculations);
+          const portfolioName = portfolios.find(p => p.id === selectedPortfolio)?.name || 'portfolio';
+          exportToCSV(formattedData, `portfolio_${portfolioName}`);
+        } else {
+          alert('No holdings to export');
+        }
+      }}
+      disabled={!portfolioDetails?.holdings || portfolioDetails.holdings.length === 0}
+      style={{
+        padding: '0.75rem 1.5rem',
+        background: portfolioDetails?.holdings?.length > 0 ? '#059669' : '#475569',
+        border: 'none',
+        borderRadius: '0.5rem',
+        color: 'white',
+        cursor: portfolioDetails?.holdings?.length > 0 ? 'pointer' : 'not-allowed',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.5rem',
+        fontSize: '0.875rem',
+        fontWeight: '600'
+      }}
+    >
+      <Download size={16} />
+      Export CSV
+    </button>
+  </div>
+</div>
+
+
+
 
           {/* Import CSV Form */}
           {showImportForm && (
@@ -936,6 +989,10 @@ const renderPerformanceChart = () => {
               </div>
             </div>
           )}
+
+
+
+
 
           {/* Transaction Form */}
           {showTransactionForm && (

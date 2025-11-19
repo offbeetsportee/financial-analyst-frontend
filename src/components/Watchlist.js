@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Star, TrendingUp, TrendingDown, RefreshCw, Loader, AlertCircle } from 'lucide-react';
 import { watchlistAPI } from '../services/api';
+import { Download } from 'lucide-react';
+import { exportToCSV, formatWatchlistForExport } from '../utils/exportCSV';
 
 const Watchlist = ({ user, onStockClick }) => {
   const [watchlist, setWatchlist] = useState([]);
