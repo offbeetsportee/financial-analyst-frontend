@@ -11,6 +11,7 @@ import Watchlist from './components/Watchlist';
 import Alerts from './components/Alerts';
 import Portfolio from './components/Portfolio';
 import StockSearch from './components/StockSearch';
+import StockComparison from './components/StockComparison';
 import './App.css';
 
 function App() {
@@ -299,7 +300,7 @@ function App() {
 
       <div style={{ maxWidth: '1200px', margin: '1rem auto', padding: '0 1rem' }}>
         <div className="tabs-container tab-scroll-container" style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid #334155', marginBottom: '2rem' }}>
-          {['market', 'company', 'portfolio', 'watchlist', 'education', 'settings'].map(tab => (
+          {['market', 'company', 'compare', 'portfolio', 'watchlist', 'education', 'settings'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -568,6 +569,7 @@ function App() {
               </div>
             )}
 
+
             {stockData && (
               <div>
                 <div style={{ background: 'linear-gradient(to right, #2563eb, #1e40af)', borderRadius: '0.75rem', padding: '2rem', marginBottom: '2rem' }}>
@@ -691,6 +693,12 @@ function App() {
             )}
           </div>
         )}
+
+{activeTab === 'compare' && (
+  <div>
+    <StockComparison />
+  </div>
+)}
 
         {activeTab === 'watchlist' && (
           <div>
