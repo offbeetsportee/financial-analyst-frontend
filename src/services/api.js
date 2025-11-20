@@ -1,4 +1,4 @@
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5555/api';
 
 export const stockAPI = {
   getStockData: async (symbol) => {
@@ -28,6 +28,19 @@ export const stockAPI = {
       const error = await response.json();
       throw new Error(error.error || 'Failed to fetch price data');
     }
+    return response.json();
+  },
+
+ getNews: async (symbol) => {
+    const response = await fetch(`${API_URL}/news/${symbol}?limit=10`);
+    if (!response.ok) throw new Error('Failed to fetch news');
+    return response.json();
+  },
+
+
+getSectorData: async (symbol) => {
+    const response = await fetch(`${API_URL}/sector/${symbol}`);
+    if (!response.ok) throw new Error('Failed to fetch sector data');
     return response.json();
   },
 

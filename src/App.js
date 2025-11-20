@@ -13,6 +13,9 @@ import Portfolio from './components/Portfolio';
 import StockSearch from './components/StockSearch';
 import StockComparison from './components/StockComparison';
 import Preferences from './components/Preferences';
+import StockNews from './components/StockNews';
+import TechnicalIndicators from './components/TechnicalIndicators';
+import SectorAnalysis from './components/SectorAnalysis';
 import './App.css';
 
 function App() {
@@ -714,14 +717,27 @@ useEffect(() => {
                     <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
                       <Loader size={48} color="#60a5fa" className="spin" />
                     </div>
-                  ) : priceData ? (
-                    <StockChart
-                      priceData={priceData.data}
-                      performance={priceData.performance}
-                      symbol={selectedStock}
-                      timeframe={selectedTimeframe}
-                    />
+                  
+) : priceData ? (
+                    <>
+                      <StockChart
+                        priceData={priceData.data}
+                        performance={priceData.performance}
+                        symbol={selectedStock}
+                        timeframe={selectedTimeframe}
+                      />
+                      
+                      {/* Technical Indicators - ADD THIS */}
+                      <div style={{ marginTop: '2rem' }}>
+                        <TechnicalIndicators 
+                          priceData={priceData.data} 
+                          symbol={selectedStock} 
+                        />
+                      </div>
+                    </>
                   ) : (
+
+
                     <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>
                       Click a timeframe to load price data
                     </div>
@@ -742,6 +758,16 @@ useEffect(() => {
                   <MetricCard label="Current Ratio" value={stockData.CurrentRatio > 0 ? stockData.CurrentRatio : 'N/A'} />
                   <MetricCard label="Book Value" value={`$${stockData.BookValue || 'N/A'}`} />
                 </div>
+
+{/* ADD NEWS SECTION HERE ⬇️ */}
+                <div style={{ marginTop: '2rem' }}>
+                  <StockNews symbol={selectedStock} />
+                </div>
+ {/* ADD SECTOR ANALYSIS HERE */}
+                <div style={{ marginTop: '2rem' }}>
+                  <SectorAnalysis symbol={selectedStock} />
+                </div>
+
               </div>
             )}
           </div>
