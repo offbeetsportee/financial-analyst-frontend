@@ -1,4 +1,4 @@
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5555/api';
+const API_URL = process.env.REACT_APP_API_URL || 'https://financial-analyst-backend-production-7175.up.railway.app/api';
 
 export const stockAPI = {
   getStockData: async (symbol) => {
