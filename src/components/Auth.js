@@ -43,40 +43,53 @@ const Auth = ({ onClose }) => {
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: 'rgba(0, 0, 0, 0.8)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000
-    }}>
-      <div style={{
-        background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
-        borderRadius: '1rem',
-        padding: '2rem',
-        width: '90%',
-        maxWidth: '400px',
-        border: '1px solid #475569',
-        position: 'relative'
+    <div 
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.85)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 99999,
+        padding: '1rem',
+        overflow: 'auto'
       }}>
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
+          borderRadius: '1rem',
+          padding: '2rem',
+          width: '100%',
+          maxWidth: '420px',
+          border: '1px solid #475569',
+          position: 'relative',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)',
+          margin: 'auto'
+        }}>
         <button
           onClick={onClose}
           style={{
             position: 'absolute',
             top: '1rem',
             right: '1rem',
-            background: 'none',
+            background: 'rgba(148, 163, 184, 0.1)',
             border: 'none',
             color: '#94a3b8',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            padding: '0.5rem',
+            borderRadius: '0.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
           }}
         >
-          <X size={24} />
+          <X size={20} />
         </button>
 
         <h2 style={{
@@ -115,7 +128,8 @@ const Auth = ({ onClose }) => {
                 display: 'block',
                 fontSize: '0.875rem',
                 color: '#cbd5e1',
-                marginBottom: '0.5rem'
+                marginBottom: '0.5rem',
+                fontWeight: '500'
               }}>
                 Name
               </label>
@@ -125,7 +139,8 @@ const Auth = ({ onClose }) => {
                   left: '0.75rem',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  color: '#64748b'
+                  color: '#64748b',
+                  pointerEvents: 'none'
                 }} />
                 <input
                   type="text"
@@ -137,11 +152,12 @@ const Auth = ({ onClose }) => {
                   style={{
                     width: '100%',
                     padding: '0.75rem 0.75rem 0.75rem 2.5rem',
-                    background: '#1e293b',
+                    background: '#0f172a',
                     border: '1px solid #475569',
                     borderRadius: '0.5rem',
                     color: 'white',
-                    fontSize: '0.875rem'
+                    fontSize: '0.875rem',
+                    boxSizing: 'border-box'
                   }}
                 />
               </div>
@@ -153,7 +169,8 @@ const Auth = ({ onClose }) => {
               display: 'block',
               fontSize: '0.875rem',
               color: '#cbd5e1',
-              marginBottom: '0.5rem'
+              marginBottom: '0.5rem',
+              fontWeight: '500'
             }}>
               Email
             </label>
@@ -163,7 +180,8 @@ const Auth = ({ onClose }) => {
                 left: '0.75rem',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                color: '#64748b'
+                color: '#64748b',
+                pointerEvents: 'none'
               }} />
               <input
                 type="email"
@@ -175,11 +193,12 @@ const Auth = ({ onClose }) => {
                 style={{
                   width: '100%',
                   padding: '0.75rem 0.75rem 0.75rem 2.5rem',
-                  background: '#1e293b',
+                  background: '#0f172a',
                   border: '1px solid #475569',
                   borderRadius: '0.5rem',
                   color: 'white',
-                  fontSize: '0.875rem'
+                  fontSize: '0.875rem',
+                  boxSizing: 'border-box'
                 }}
               />
             </div>
@@ -190,7 +209,8 @@ const Auth = ({ onClose }) => {
               display: 'block',
               fontSize: '0.875rem',
               color: '#cbd5e1',
-              marginBottom: '0.5rem'
+              marginBottom: '0.5rem',
+              fontWeight: '500'
             }}>
               Password
             </label>
@@ -200,7 +220,8 @@ const Auth = ({ onClose }) => {
                 left: '0.75rem',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                color: '#64748b'
+                color: '#64748b',
+                pointerEvents: 'none'
               }} />
               <input
                 type="password"
@@ -212,11 +233,12 @@ const Auth = ({ onClose }) => {
                 style={{
                   width: '100%',
                   padding: '0.75rem 0.75rem 0.75rem 2.5rem',
-                  background: '#1e293b',
+                  background: '#0f172a',
                   border: '1px solid #475569',
                   borderRadius: '0.5rem',
                   color: 'white',
-                  fontSize: '0.875rem'
+                  fontSize: '0.875rem',
+                  boxSizing: 'border-box'
                 }}
               />
             </div>
@@ -235,7 +257,8 @@ const Auth = ({ onClose }) => {
               fontWeight: '600',
               fontSize: '0.875rem',
               cursor: loading ? 'not-allowed' : 'pointer',
-              marginBottom: '1rem'
+              marginBottom: '1rem',
+              transition: 'all 0.2s'
             }}
           >
             {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Create Account')}
