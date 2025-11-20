@@ -16,6 +16,7 @@ import Preferences from './components/Preferences';
 import StockNews from './components/StockNews';
 import TechnicalIndicators from './components/TechnicalIndicators';
 import SectorAnalysis from './components/SectorAnalysis';
+import SocialSentiment from './components/SocialSentiment';
 import './App.css';
 
 function App() {
@@ -767,6 +768,11 @@ useEffect(() => {
                 <div style={{ marginTop: '2rem' }}>
                   <SectorAnalysis symbol={selectedStock} />
                 </div>
+
+{/* Social Sentiment - ADD THIS */}
+<div style={{ marginTop: '2rem' }}>
+  <SocialSentiment symbol={selectedStock} />
+</div>
 
               </div>
             )}

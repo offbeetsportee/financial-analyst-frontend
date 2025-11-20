@@ -44,6 +44,13 @@ getSectorData: async (symbol) => {
     return response.json();
   },
 
+
+getSocialSentiment: async (symbol) => {
+    const response = await fetch(`${API_URL}/social/${symbol}`);
+    if (!response.ok) throw new Error('Failed to fetch social sentiment');
+    return response.json();
+  },
+
   // NEW: Search stocks by symbol or name
   searchStocks: async (query) => {
     const response = await fetch(`${API_URL}/stocks/search?q=${encodeURIComponent(query)}`);
