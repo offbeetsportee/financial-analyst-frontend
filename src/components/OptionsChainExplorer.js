@@ -2,22 +2,32 @@ import React, { useState, useEffect } from 'react';
 import { 
   TrendingUp, TrendingDown, Filter, AlertCircle, 
   Calendar, DollarSign, Activity, Zap, RefreshCw, Loader,
-  ChevronDown, ChevronUp, Info, BarChart3
+  ChevronDown, ChevronUp, Info, BarChart3, Search, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import MobileTable from './MobileTable';
 
-const OptionsChainExplorer = ({ symbol, underlyingPrice }) => {
+const OptionsChainExplorer = ({ symbol: initialSymbol, underlyingPrice: initialPrice }) => {
+  const [currentSymbol, setCurrentSymbol] = useState(initialSymbol || '');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [currentUnderlyingPrice, setCurrentUnderlyingPrice] = useState(initialPrice || 0);
+  
   const [optionsData, setOptionsData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [expirations, setExpirations] = useState([]);
   const [selectedExpiration, setSelectedExpiration] = useState(null);
-  const [activeTab, setActiveTab] = useState('chain'); // chain, unusual, greeks
-  const [selectedType, setSelectedType] = useState('all'); // all, calls, puts
+  const [activeTab, setActiveTab] = useState('chain');
+  const [selectedType, setSelectedType] = useState('all');
+  
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(20);
   
   // Filters
   const [filters, setFilters] = useState({
-    moneyness: 'all', // all, ITM, ATM, OTM
+    moneyness: 'all',
     minVolume: 0,
     minOpenInterest: 0,
     minIV: 0,
@@ -30,15 +40,25 @@ const OptionsChainExplorer = ({ symbol, underlyingPrice }) => {
   const [unusualActivity, setUnusualActivity] = useState([]);
   const [chainGreeks, setChainGreeks] = useState(null);
 
-  // API base URL
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
+  // Update when props change
   useEffect(() => {
-    if (symbol) {
+    if (initialSymbol) {
+      setCurrentSymbol(initialSymbol);
+    }
+    if (initialPrice) {
+      setCurrentUnderlyingPrice(initialPrice);
+    }
+  }, [initialSymbol, initialPrice]);
+
+  useEffect(() => {
+    if (currentSymbol) {
       fetchExpirations();
       fetchOptionsChain();
+      fetchStockPrice();
     }
-  }, [symbol]);
+  }, [currentSymbol]);
 
   useEffect(() => {
     if (selectedExpiration) {
@@ -46,9 +66,57 @@ const OptionsChainExplorer = ({ symbol, underlyingPrice }) => {
     }
   }, [selectedExpiration]);
 
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters, selectedType, selectedExpiration]);
+
+  const fetchStockPrice = async () => {
+    try {
+      const response = await fetch(`${API_URL}/stocks/${currentSymbol}`);
+      const data = await response.json();
+      if (data.currentPrice) {
+        setCurrentUnderlyingPrice(data.currentPrice);
+      }
+    } catch (err) {
+      console.error('Failed to fetch stock price:', err);
+    }
+  };
+
+  const searchStocks = async (query) => {
+    if (query.length < 1) {
+      setSearchResults([]);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/stocks/search?q=${encodeURIComponent(query)}`);
+      const data = await response.json();
+      setSearchResults(data || []);
+      setShowSearchResults(true);
+    } catch (err) {
+      console.error('Search error:', err);
+      setSearchResults([]);
+    }
+  };
+
+  const handleSearchChange = (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    searchStocks(query);
+  };
+
+  const selectStock = (symbol) => {
+    setCurrentSymbol(symbol);
+    setSearchQuery('');
+    setSearchResults([]);
+    setShowSearchResults(false);
+    setCurrentPage(1);
+  };
+
   const fetchExpirations = async () => {
     try {
-      const response = await fetch(`${API_URL}/options/${symbol}/expirations`);
+      const response = await fetch(`${API_URL}/options/${currentSymbol}/expirations`);
       const data = await response.json();
       
       if (data.success) {
@@ -68,8 +136,8 @@ const OptionsChainExplorer = ({ symbol, underlyingPrice }) => {
     
     try {
       const url = selectedExpiration 
-        ? `${API_URL}/options/${symbol}?expiration=${selectedExpiration}`
-        : `${API_URL}/options/${symbol}`;
+        ? `${API_URL}/options/${currentSymbol}?expiration=${selectedExpiration}`
+        : `${API_URL}/options/${currentSymbol}`;
       
       const response = await fetch(url);
       const data = await response.json();
@@ -89,7 +157,7 @@ const OptionsChainExplorer = ({ symbol, underlyingPrice }) => {
 
   const fetchUnusualActivity = async () => {
     try {
-      const response = await fetch(`${API_URL}/options/${symbol}/unusual`);
+      const response = await fetch(`${API_URL}/options/${currentSymbol}/unusual`);
       const data = await response.json();
       
       if (data.success) {
@@ -103,8 +171,8 @@ const OptionsChainExplorer = ({ symbol, underlyingPrice }) => {
   const fetchGreeks = async () => {
     try {
       const url = selectedExpiration
-        ? `${API_URL}/options/${symbol}/greeks?expiration=${selectedExpiration}`
-        : `${API_URL}/options/${symbol}/greeks`;
+        ? `${API_URL}/options/${currentSymbol}/greeks?expiration=${selectedExpiration}`
+        : `${API_URL}/options/${currentSymbol}/greeks`;
       
       const response = await fetch(url);
       const data = await response.json();
@@ -118,8 +186,8 @@ const OptionsChainExplorer = ({ symbol, underlyingPrice }) => {
   };
 
   const applyFilters = () => {
-    // Filter will be applied in rendering
     setShowFilters(false);
+    setCurrentPage(1);
   };
 
   const resetFilters = () => {
@@ -132,6 +200,7 @@ const OptionsChainExplorer = ({ symbol, underlyingPrice }) => {
       minStrike: 0,
       maxStrike: 10000
     });
+    setCurrentPage(1);
   };
 
   const filterOptions = (options) => {
@@ -146,7 +215,7 @@ const OptionsChainExplorer = ({ symbol, underlyingPrice }) => {
         if (filters.moneyness === 'ITM' && !option.inTheMoney) return false;
         if (filters.moneyness === 'OTM' && option.inTheMoney) return false;
         if (filters.moneyness === 'ATM') {
-          const diff = Math.abs(option.strike - underlyingPrice) / underlyingPrice;
+          const diff = Math.abs(option.strike - currentUnderlyingPrice) / currentUnderlyingPrice;
           if (diff > 0.02) return false;
         }
       }
@@ -155,7 +224,50 @@ const OptionsChainExplorer = ({ symbol, underlyingPrice }) => {
     });
   };
 
-  if (loading) {
+  // Pagination logic
+  const paginate = (items) => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return items.slice(startIndex, endIndex);
+  };
+
+  const getTotalPages = (items) => {
+    return Math.ceil(items.length / itemsPerPage);
+  };
+
+  if (!currentSymbol) {
+    return (
+      <div style={{ 
+        padding: '3rem', 
+        textAlign: 'center',
+        background: 'rgba(30, 41, 59, 0.5)',
+        borderRadius: '0.75rem',
+        border: '1px solid #334155'
+      }}>
+        <Activity size={48} color="#94a3b8" style={{ margin: '0 auto 1rem' }} />
+        <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#e2e8f0' }}>
+          Options Chain Explorer
+        </h3>
+        <p style={{ color: '#94a3b8', marginBottom: '2rem' }}>
+          Search for any stock to view its options chain
+        </p>
+        
+        {/* Search input */}
+        <div style={{ maxWidth: '400px', margin: '0 auto' }}>
+          <StockSearchInput
+            searchQuery={searchQuery}
+            handleSearchChange={handleSearchChange}
+            searchResults={searchResults}
+            showSearchResults={showSearchResults}
+            selectStock={selectStock}
+            setShowSearchResults={setShowSearchResults}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (loading && !optionsData) {
     return (
       <div style={{ 
         display: 'flex', 
@@ -204,18 +316,21 @@ const OptionsChainExplorer = ({ symbol, underlyingPrice }) => {
 
   const filteredCalls = optionsData ? filterOptions(optionsData.calls) : [];
   const filteredPuts = optionsData ? filterOptions(optionsData.puts) : [];
+  
+  const paginatedCalls = paginate(filteredCalls);
+  const paginatedPuts = paginate(filteredPuts);
 
   return (
     <div>
-      {/* Header */}
+      {/* Header with Search */}
       <div style={{ 
         background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)', 
         borderRadius: '0.75rem', 
         padding: '2rem', 
         marginBottom: '2rem'
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
+          <div style={{ flex: 1, minWidth: '250px' }}>
             <h2 style={{ 
               fontSize: '2rem', 
               fontWeight: 'bold', 
@@ -225,7 +340,7 @@ const OptionsChainExplorer = ({ symbol, underlyingPrice }) => {
               gap: '0.5rem' 
             }}>
               <Activity size={32} color="white" />
-              Options Chain - {symbol}
+              Options Chain - {currentSymbol}
             </h2>
             <p style={{ color: '#e9d5ff', fontSize: '1rem', margin: 0 }}>
               Professional-grade options analysis and trading tools
@@ -253,10 +368,21 @@ const OptionsChainExplorer = ({ symbol, underlyingPrice }) => {
           </button>
         </div>
 
+        {/* Stock Search Bar */}
+        <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
+          <StockSearchInput
+            searchQuery={searchQuery}
+            handleSearchChange={handleSearchChange}
+            searchResults={searchResults}
+            showSearchResults={showSearchResults}
+            selectStock={selectStock}
+            setShowSearchResults={setShowSearchResults}
+          />
+        </div>
+
         {/* Summary Stats */}
         {optionsData && (
           <div style={{ 
-            marginTop: '1.5rem',
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
             gap: '1rem'
@@ -291,7 +417,7 @@ const OptionsChainExplorer = ({ symbol, underlyingPrice }) => {
             />
             <StatCard 
               label="Underlying Price"
-              value={`$${underlyingPrice.toFixed(2)}`}
+              value={`$${currentUnderlyingPrice.toFixed(2)}`}
               icon={<DollarSign size={20} />}
               color="#60a5fa"
             />
@@ -398,187 +524,12 @@ const OptionsChainExplorer = ({ symbol, underlyingPrice }) => {
 
           {/* Filter Panel */}
           {showFilters && (
-            <div style={{
-              marginTop: '1rem',
-              background: 'rgba(30, 41, 59, 0.5)',
-              border: '1px solid #334155',
-              borderRadius: '0.75rem',
-              padding: '1.5rem'
-            }}>
-              <h4 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: '600' }}>
-                Filter Options
-              </h4>
-
-              <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-                gap: '1rem',
-                marginBottom: '1rem'
-              }}>
-                {/* Moneyness */}
-                <div>
-                  <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '0.5rem' }}>
-                    Moneyness
-                  </label>
-                  <select
-                    value={filters.moneyness}
-                    onChange={(e) => setFilters({...filters, moneyness: e.target.value})}
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem',
-                      background: '#0f172a',
-                      border: '1px solid #475569',
-                      borderRadius: '0.375rem',
-                      color: 'white',
-                      fontSize: '0.875rem'
-                    }}
-                  >
-                    <option value="all">All</option>
-                    <option value="ITM">In The Money</option>
-                    <option value="ATM">At The Money</option>
-                    <option value="OTM">Out of The Money</option>
-                  </select>
-                </div>
-
-                {/* Min Volume */}
-                <div>
-                  <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '0.5rem' }}>
-                    Min Volume
-                  </label>
-                  <input
-                    type="number"
-                    value={filters.minVolume}
-                    onChange={(e) => setFilters({...filters, minVolume: parseInt(e.target.value) || 0})}
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem',
-                      background: '#0f172a',
-                      border: '1px solid #475569',
-                      borderRadius: '0.375rem',
-                      color: 'white',
-                      fontSize: '0.875rem'
-                    }}
-                  />
-                </div>
-
-                {/* Min Open Interest */}
-                <div>
-                  <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '0.5rem' }}>
-                    Min Open Interest
-                  </label>
-                  <input
-                    type="number"
-                    value={filters.minOpenInterest}
-                    onChange={(e) => setFilters({...filters, minOpenInterest: parseInt(e.target.value) || 0})}
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem',
-                      background: '#0f172a',
-                      border: '1px solid #475569',
-                      borderRadius: '0.375rem',
-                      color: 'white',
-                      fontSize: '0.875rem'
-                    }}
-                  />
-                </div>
-
-                {/* Min IV */}
-                <div>
-                  <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '0.5rem' }}>
-                    Min IV (%)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={filters.minIV * 100}
-                    onChange={(e) => setFilters({...filters, minIV: parseFloat(e.target.value) / 100 || 0})}
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem',
-                      background: '#0f172a',
-                      border: '1px solid #475569',
-                      borderRadius: '0.375rem',
-                      color: 'white',
-                      fontSize: '0.875rem'
-                    }}
-                  />
-                </div>
-
-                {/* Strike Range */}
-                <div>
-                  <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '0.5rem' }}>
-                    Min Strike
-                  </label>
-                  <input
-                    type="number"
-                    value={filters.minStrike}
-                    onChange={(e) => setFilters({...filters, minStrike: parseFloat(e.target.value) || 0})}
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem',
-                      background: '#0f172a',
-                      border: '1px solid #475569',
-                      borderRadius: '0.375rem',
-                      color: 'white',
-                      fontSize: '0.875rem'
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '0.5rem' }}>
-                    Max Strike
-                  </label>
-                  <input
-                    type="number"
-                    value={filters.maxStrike}
-                    onChange={(e) => setFilters({...filters, maxStrike: parseFloat(e.target.value) || 10000})}
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem',
-                      background: '#0f172a',
-                      border: '1px solid #475569',
-                      borderRadius: '0.375rem',
-                      color: 'white',
-                      fontSize: '0.875rem'
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button
-                  onClick={applyFilters}
-                  style={{
-                    padding: '0.5rem 1.5rem',
-                    background: '#10b981',
-                    border: 'none',
-                    borderRadius: '0.375rem',
-                    color: 'white',
-                    cursor: 'pointer',
-                    fontSize: '0.875rem',
-                    fontWeight: '600'
-                  }}
-                >
-                  Apply Filters
-                </button>
-                <button
-                  onClick={resetFilters}
-                  style={{
-                    padding: '0.5rem 1.5rem',
-                    background: '#475569',
-                    border: 'none',
-                    borderRadius: '0.375rem',
-                    color: 'white',
-                    cursor: 'pointer',
-                    fontSize: '0.875rem',
-                    fontWeight: '600'
-                  }}
-                >
-                  Reset
-                </button>
-              </div>
-            </div>
+            <FilterPanel 
+              filters={filters}
+              setFilters={setFilters}
+              applyFilters={applyFilters}
+              resetFilters={resetFilters}
+            />
           )}
         </div>
       )}
@@ -586,11 +537,17 @@ const OptionsChainExplorer = ({ symbol, underlyingPrice }) => {
       {/* Content based on active tab */}
       {activeTab === 'chain' && (
         <OptionsChainTable 
-          calls={filteredCalls}
-          puts={filteredPuts}
-          underlyingPrice={underlyingPrice}
+          calls={paginatedCalls}
+          puts={paginatedPuts}
+          allCalls={filteredCalls}
+          allPuts={filteredPuts}
+          underlyingPrice={currentUnderlyingPrice}
           selectedType={selectedType}
           setSelectedType={setSelectedType}
+          currentPage={currentPage}
+          setCurrentPage={setCurrentPage}
+          itemsPerPage={itemsPerPage}
+          getTotalPages={getTotalPages}
         />
       )}
 
@@ -611,8 +568,407 @@ const OptionsChainExplorer = ({ symbol, underlyingPrice }) => {
   );
 };
 
-// Helper Components
+// Stock Search Input Component
+const StockSearchInput = ({ searchQuery, handleSearchChange, searchResults, showSearchResults, selectStock, setShowSearchResults }) => (
+  <div style={{ position: 'relative' }}>
+    <div style={{ position: 'relative' }}>
+      <Search 
+        size={20} 
+        style={{ 
+          position: 'absolute', 
+          left: '1rem', 
+          top: '50%', 
+          transform: 'translateY(-50%)',
+          color: '#94a3b8'
+        }} 
+      />
+      <input
+        type="text"
+        value={searchQuery}
+        onChange={handleSearchChange}
+        placeholder="Search stocks (e.g., AAPL, TSLA, SPY)..."
+        style={{
+          width: '100%',
+          padding: '0.75rem 1rem 0.75rem 3rem',
+          background: 'rgba(255, 255, 255, 0.1)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          borderRadius: '0.5rem',
+          color: 'white',
+          fontSize: '1rem',
+          outline: 'none'
+        }}
+        onFocus={() => searchResults.length > 0 && setShowSearchResults(true)}
+      />
+    </div>
+    
+    {/* Search Results Dropdown */}
+    {showSearchResults && searchResults.length > 0 && (
+      <div style={{
+        position: 'absolute',
+        top: '100%',
+        left: 0,
+        right: 0,
+        marginTop: '0.5rem',
+        background: '#1e293b',
+        border: '1px solid #334155',
+        borderRadius: '0.5rem',
+        maxHeight: '300px',
+        overflowY: 'auto',
+        zIndex: 1000,
+        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.3)'
+      }}>
+        {searchResults.map((result, idx) => (
+          <div
+            key={idx}
+            onClick={() => selectStock(result.symbol)}
+            style={{
+              padding: '0.75rem 1rem',
+              cursor: 'pointer',
+              borderBottom: idx < searchResults.length - 1 ? '1px solid #334155' : 'none',
+              transition: 'background 0.2s'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = '#334155'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+          >
+            <div style={{ fontWeight: '600', color: '#60a5fa', marginBottom: '0.25rem' }}>
+              {result.symbol}
+            </div>
+            <div style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>
+              {result.name}
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+);
 
+// Filter Panel Component
+const FilterPanel = ({ filters, setFilters, applyFilters, resetFilters }) => (
+  <div style={{
+    marginTop: '1rem',
+    background: 'rgba(30, 41, 59, 0.5)',
+    border: '1px solid #334155',
+    borderRadius: '0.75rem',
+    padding: '1.5rem'
+  }}>
+    <h4 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: '600' }}>
+      Filter Options
+    </h4>
+
+    <div style={{ 
+      display: 'grid', 
+      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+      gap: '1rem',
+      marginBottom: '1rem'
+    }}>
+      {/* Moneyness */}
+      <div>
+        <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '0.5rem' }}>
+          Moneyness
+        </label>
+        <select
+          value={filters.moneyness}
+          onChange={(e) => setFilters({...filters, moneyness: e.target.value})}
+          style={{
+            width: '100%',
+            padding: '0.5rem',
+            background: '#0f172a',
+            border: '1px solid #475569',
+            borderRadius: '0.375rem',
+            color: 'white',
+            fontSize: '0.875rem'
+          }}
+        >
+          <option value="all">All</option>
+          <option value="ITM">In The Money</option>
+          <option value="ATM">At The Money</option>
+          <option value="OTM">Out of The Money</option>
+        </select>
+      </div>
+
+      {/* Min Volume */}
+      <div>
+        <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '0.5rem' }}>
+          Min Volume
+        </label>
+        <input
+          type="number"
+          value={filters.minVolume}
+          onChange={(e) => setFilters({...filters, minVolume: parseInt(e.target.value) || 0})}
+          style={{
+            width: '100%',
+            padding: '0.5rem',
+            background: '#0f172a',
+            border: '1px solid #475569',
+            borderRadius: '0.375rem',
+            color: 'white',
+            fontSize: '0.875rem'
+          }}
+        />
+      </div>
+
+      {/* Min Open Interest */}
+      <div>
+        <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '0.5rem' }}>
+          Min Open Interest
+        </label>
+        <input
+          type="number"
+          value={filters.minOpenInterest}
+          onChange={(e) => setFilters({...filters, minOpenInterest: parseInt(e.target.value) || 0})}
+          style={{
+            width: '100%',
+            padding: '0.5rem',
+            background: '#0f172a',
+            border: '1px solid #475569',
+            borderRadius: '0.375rem',
+            color: 'white',
+            fontSize: '0.875rem'
+          }}
+        />
+      </div>
+
+      {/* Min IV */}
+      <div>
+        <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '0.5rem' }}>
+          Min IV (%)
+        </label>
+        <input
+          type="number"
+          step="0.1"
+          value={filters.minIV * 100}
+          onChange={(e) => setFilters({...filters, minIV: parseFloat(e.target.value) / 100 || 0})}
+          style={{
+            width: '100%',
+            padding: '0.5rem',
+            background: '#0f172a',
+            border: '1px solid #475569',
+            borderRadius: '0.375rem',
+            color: 'white',
+            fontSize: '0.875rem'
+          }}
+        />
+      </div>
+
+      {/* Strike Range */}
+      <div>
+        <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '0.5rem' }}>
+          Min Strike
+        </label>
+        <input
+          type="number"
+          value={filters.minStrike}
+          onChange={(e) => setFilters({...filters, minStrike: parseFloat(e.target.value) || 0})}
+          style={{
+            width: '100%',
+            padding: '0.5rem',
+            background: '#0f172a',
+            border: '1px solid #475569',
+            borderRadius: '0.375rem',
+            color: 'white',
+            fontSize: '0.875rem'
+          }}
+        />
+      </div>
+
+      <div>
+        <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '0.5rem' }}>
+          Max Strike
+        </label>
+        <input
+          type="number"
+          value={filters.maxStrike}
+          onChange={(e) => setFilters({...filters, maxStrike: parseFloat(e.target.value) || 10000})}
+          style={{
+            width: '100%',
+            padding: '0.5rem',
+            background: '#0f172a',
+            border: '1px solid #475569',
+            borderRadius: '0.375rem',
+            color: 'white',
+            fontSize: '0.875rem'
+          }}
+        />
+      </div>
+    </div>
+
+    <div style={{ display: 'flex', gap: '0.5rem' }}>
+      <button
+        onClick={applyFilters}
+        style={{
+          padding: '0.5rem 1.5rem',
+          background: '#10b981',
+          border: 'none',
+          borderRadius: '0.375rem',
+          color: 'white',
+          cursor: 'pointer',
+          fontSize: '0.875rem',
+          fontWeight: '600'
+        }}
+      >
+        Apply Filters
+      </button>
+      <button
+        onClick={resetFilters}
+        style={{
+          padding: '0.5rem 1.5rem',
+          background: '#475569',
+          border: 'none',
+          borderRadius: '0.375rem',
+          color: 'white',
+          cursor: 'pointer',
+          fontSize: '0.875rem',
+          fontWeight: '600'
+        }}
+      >
+        Reset
+      </button>
+    </div>
+  </div>
+);
+
+// Pagination Component
+const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+  if (totalPages <= 1) return null;
+
+  const pages = [];
+  const maxPagesToShow = 5;
+  
+  let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+  let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+  
+  if (endPage - startPage < maxPagesToShow - 1) {
+    startPage = Math.max(1, endPage - maxPagesToShow + 1);
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(i);
+  }
+
+  return (
+    <div style={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center',
+      gap: '0.5rem',
+      marginTop: '1.5rem',
+      flexWrap: 'wrap'
+    }}>
+      <button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        style={{
+          padding: '0.5rem 0.75rem',
+          background: currentPage === 1 ? '#334155' : '#475569',
+          border: 'none',
+          borderRadius: '0.375rem',
+          color: currentPage === 1 ? '#64748b' : 'white',
+          cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.25rem',
+          fontSize: '0.875rem'
+        }}
+      >
+        <ChevronLeft size={16} />
+        Prev
+      </button>
+
+      {startPage > 1 && (
+        <>
+          <button
+            onClick={() => onPageChange(1)}
+            style={{
+              padding: '0.5rem 0.75rem',
+              background: '#475569',
+              border: 'none',
+              borderRadius: '0.375rem',
+              color: 'white',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              minWidth: '40px'
+            }}
+          >
+            1
+          </button>
+          {startPage > 2 && <span style={{ color: '#64748b' }}>...</span>}
+        </>
+      )}
+
+      {pages.map(page => (
+        <button
+          key={page}
+          onClick={() => onPageChange(page)}
+          style={{
+            padding: '0.5rem 0.75rem',
+            background: page === currentPage ? '#8b5cf6' : '#475569',
+            border: 'none',
+            borderRadius: '0.375rem',
+            color: 'white',
+            cursor: 'pointer',
+            fontSize: '0.875rem',
+            fontWeight: page === currentPage ? '600' : '400',
+            minWidth: '40px'
+          }}
+        >
+          {page}
+        </button>
+      ))}
+
+      {endPage < totalPages && (
+        <>
+          {endPage < totalPages - 1 && <span style={{ color: '#64748b' }}>...</span>}
+          <button
+            onClick={() => onPageChange(totalPages)}
+            style={{
+              padding: '0.5rem 0.75rem',
+              background: '#475569',
+              border: 'none',
+              borderRadius: '0.375rem',
+              color: 'white',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              minWidth: '40px'
+            }}
+          >
+            {totalPages}
+          </button>
+        </>
+      )}
+
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        style={{
+          padding: '0.5rem 0.75rem',
+          background: currentPage === totalPages ? '#334155' : '#475569',
+          border: 'none',
+          borderRadius: '0.375rem',
+          color: currentPage === totalPages ? '#64748b' : 'white',
+          cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.25rem',
+          fontSize: '0.875rem'
+        }}
+      >
+        Next
+        <ChevronRight size={16} />
+      </button>
+
+      <div style={{ 
+        marginLeft: '1rem', 
+        color: '#94a3b8', 
+        fontSize: '0.875rem' 
+      }}>
+        Page {currentPage} of {totalPages}
+      </div>
+    </div>
+  );
+};
+
+// Helper Components (same as before, but with pagination)
 const StatCard = ({ label, value, icon, color = 'white' }) => (
   <div style={{
     background: 'rgba(255, 255, 255, 0.1)',
@@ -659,15 +1015,21 @@ const TabButton = ({ active, onClick, icon, label }) => (
   </button>
 );
 
-const OptionsChainTable = ({ calls, puts, underlyingPrice, selectedType, setSelectedType }) => {
+const OptionsChainTable = ({ calls, puts, allCalls, allPuts, underlyingPrice, selectedType, setSelectedType, currentPage, setCurrentPage, itemsPerPage, getTotalPages }) => {
+  const callsTotalPages = getTotalPages(allCalls);
+  const putsTotalPages = getTotalPages(allPuts);
+
   return (
     <div>
       {/* Type Selector */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', alignItems: 'center' }}>
         {['all', 'calls', 'puts'].map(type => (
           <button
             key={type}
-            onClick={() => setSelectedType(type)}
+            onClick={() => {
+              setSelectedType(type);
+              setCurrentPage(1);
+            }}
             style={{
               padding: '0.5rem 1rem',
               background: selectedType === type ? '#8b5cf6' : '#334155',
@@ -683,15 +1045,28 @@ const OptionsChainTable = ({ calls, puts, underlyingPrice, selectedType, setSele
             {type}
           </button>
         ))}
+        
+        <div style={{ marginLeft: 'auto', color: '#94a3b8', fontSize: '0.875rem' }}>
+          {selectedType === 'all' && `Showing ${calls.length + puts.length} of ${allCalls.length + allPuts.length} contracts`}
+          {selectedType === 'calls' && `Showing ${calls.length} of ${allCalls.length} calls`}
+          {selectedType === 'puts' && `Showing ${puts.length} of ${allPuts.length} puts`}
+        </div>
       </div>
 
       {(selectedType === 'all' || selectedType === 'calls') && (
         <div style={{ marginBottom: '2rem' }}>
           <h3 style={{ fontSize: '1.125rem', marginBottom: '1rem', color: '#10b981', fontWeight: '600' }}>
             <TrendingUp size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
-            CALLS ({calls.length})
+            CALLS ({allCalls.length} total)
           </h3>
           <OptionsTable options={calls} type="call" underlyingPrice={underlyingPrice} />
+          {selectedType === 'calls' && (
+            <Pagination 
+              currentPage={currentPage}
+              totalPages={callsTotalPages}
+              onPageChange={setCurrentPage}
+            />
+          )}
         </div>
       )}
 
@@ -699,14 +1074,32 @@ const OptionsChainTable = ({ calls, puts, underlyingPrice, selectedType, setSele
         <div>
           <h3 style={{ fontSize: '1.125rem', marginBottom: '1rem', color: '#ef4444', fontWeight: '600' }}>
             <TrendingDown size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
-            PUTS ({puts.length})
+            PUTS ({allPuts.length} total)
           </h3>
           <OptionsTable options={puts} type="put" underlyingPrice={underlyingPrice} />
+          {selectedType === 'puts' && (
+            <Pagination 
+              currentPage={currentPage}
+              totalPages={putsTotalPages}
+              onPageChange={setCurrentPage}
+            />
+          )}
         </div>
+      )}
+
+      {selectedType === 'all' && (
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={Math.max(callsTotalPages, putsTotalPages)}
+          onPageChange={setCurrentPage}
+        />
       )}
     </div>
   );
 };
+
+// Continue with OptionsTable, UnusualActivityTab, GreeksTab components...
+// (I'll add these in the next part due to length)
 
 const OptionsTable = ({ options, type, underlyingPrice }) => {
   if (options.length === 0) {
@@ -1008,7 +1401,6 @@ const GreekCard = ({ label, value, description, color }) => (
 );
 
 // Helper functions
-
 function getDaysToExpiration(expirationDate) {
   const now = new Date();
   const exp = new Date(expirationDate);
@@ -1018,10 +1410,10 @@ function getDaysToExpiration(expirationDate) {
 }
 
 function getIVColor(iv) {
-  if (iv > 1.0) return 'rgba(239, 68, 68, 0.3)'; // Very high
-  if (iv > 0.6) return 'rgba(251, 191, 36, 0.3)'; // High
-  if (iv > 0.3) return 'rgba(59, 130, 246, 0.3)'; // Medium
-  return 'rgba(100, 116, 139, 0.3)'; // Low
+  if (iv > 1.0) return 'rgba(239, 68, 68, 0.3)';
+  if (iv > 0.6) return 'rgba(251, 191, 36, 0.3)';
+  if (iv > 0.3) return 'rgba(59, 130, 246, 0.3)';
+  return 'rgba(100, 116, 139, 0.3)';
 }
 
 const headerStyle = {
