@@ -55,7 +55,7 @@ const Portfolio = ({ user }) => {
   const [brokerFormat, setBrokerFormat] = useState('generic');
   const [importing, setImporting] = useState(false);
   const [csvPreview, setCsvPreview] = useState(null);
-const [performanceData, setPerformanceData] = useState(null);
+  const [performanceData, setPerformanceData] = useState(null);
   const [performanceLoading, setPerformanceLoading] = useState(false);
   const [performanceRange, setPerformanceRange] = useState(365);
 
@@ -77,7 +77,7 @@ const [performanceData, setPerformanceData] = useState(null);
     }
   }, [portfolioDetails]);
 
-useEffect(() => {
+  useEffect(() => {
     if (selectedPortfolio && user) {
       fetchPerformance();
     }
@@ -114,19 +114,17 @@ useEffect(() => {
     }
   };
 
-const fetchCurrentPrices = async () => {
+  const fetchCurrentPrices = async () => {
     if (!portfolioDetails?.holdings) return;
 
     const prices = {};
     for (const holding of portfolioDetails.holdings) {
       try {
-        // Use real stock API to get current price
         const data = await stockAPI.getStockData(holding.symbol);
-        prices[holding.symbol] = data.currentPrice || parseFloat(holding.average_cost);
+        prices[holding.symbol] = data.currentPrice || parseFloat(holding.purchase_price || holding.average_cost || 0);
       } catch (error) {
         console.error(`Failed to fetch price for ${holding.symbol}:`, error);
-        // Fallback to average cost if API fails
-        prices[holding.symbol] = parseFloat(holding.average_cost);
+        prices[holding.symbol] = parseFloat(holding.purchase_price || holding.average_cost || 0);
       }
     }
     setCurrentPrices(prices);
@@ -226,7 +224,7 @@ const fetchCurrentPrices = async () => {
     }
   };
 
- const fetchPerformance = async () => {
+  const fetchPerformance = async () => {
     if (!user || !selectedPortfolio) return;
 
     setPerformanceLoading(true);
@@ -240,8 +238,6 @@ const fetchCurrentPrices = async () => {
     }
   };
 
-
- // Add this new function:
   const handleDeletePortfolio = async () => {
     if (!user || !selectedPortfolio) return;
 
@@ -267,15 +263,16 @@ const fetchCurrentPrices = async () => {
   const calculatePortfolioValue = () => {
     if (!portfolioDetails?.holdings) return 0;
     return portfolioDetails.holdings.reduce((total, holding) => {
-      const currentPrice = currentPrices[holding.symbol] || parseFloat(holding.average_cost);
-      return total + (parseFloat(holding.total_shares) * currentPrice);
+      const currentPrice = currentPrices[holding.symbol] || parseFloat(holding.purchase_price || holding.average_cost || 0);
+      const shares = parseFloat(holding.shares || holding.total_shares || 0);
+      return total + (shares * currentPrice);
     }, 0);
   };
 
   const calculateTotalCost = () => {
     if (!portfolioDetails?.holdings) return 0;
     return portfolioDetails.holdings.reduce((total, holding) => {
-      return total + parseFloat(holding.total_cost);
+      return total + parseFloat(holding.total_cost || 0);
     }, 0);
   };
 
@@ -289,7 +286,7 @@ const fetchCurrentPrices = async () => {
     return ((calculateProfitLoss() / cost) * 100);
   };
 
-const renderPerformanceChart = () => {
+  const renderPerformanceChart = () => {
     if (!performanceData || performanceData.length === 0) {
       return (
         <div style={{ 
@@ -307,7 +304,6 @@ const renderPerformanceChart = () => {
       );
     }
 
-    // If only one data point, show current value as bar chart instead
     if (performanceData.length === 1) {
       const dataPoint = performanceData[0];
       return (
@@ -656,8 +652,6 @@ const renderPerformanceChart = () => {
               </button>
             ))}
 
-
- {/* Add Delete Button */}
             {selectedPortfolio && (
               <button
                 onClick={handleDeletePortfolio}
@@ -686,8 +680,6 @@ const renderPerformanceChart = () => {
         </div>
       )}
 
-          
-
       {/* Portfolio Summary */}
       {portfolioDetails && (
         <>
@@ -712,8 +704,7 @@ const renderPerformanceChart = () => {
             </div>
           </div>
 
-
-{/* ⭐ ADD THE ENTIRE PERFORMANCE CHART SECTION HERE ⭐ */}
+          {/* Performance Chart */}
           <div style={{ marginBottom: '2rem' }}>
             <div style={{ 
               background: 'rgba(30, 41, 59, 0.5)', 
@@ -758,102 +749,99 @@ const renderPerformanceChart = () => {
             </div>
           </div>
 
-{/* Add Transaction & Import CSV Buttons */}
-<div style={{ marginBottom: '2rem' }}>
-  <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-    <button
-      onClick={() => setShowTransactionForm(!showTransactionForm)}
-      style={{
-        padding: '0.75rem 1.5rem',
-        background: '#2563eb',
-        border: 'none',
-        borderRadius: '0.5rem',
-        color: 'white',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.5rem',
-        fontSize: '0.875rem',
-        fontWeight: '600'
-      }}
-    >
-      <Plus size={16} />
-      Add Transaction
-    </button>
-    
-    <button
-      onClick={() => setShowImportForm(!showImportForm)}
-      style={{
-        padding: '0.75rem 1.5rem',
-        background: '#059669',
-        border: 'none',
-        borderRadius: '0.5rem',
-        color: 'white',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.5rem',
-        fontSize: '0.875rem',
-        fontWeight: '600'
-      }}
-    >
-      <Upload size={16} />
-      Import CSV
-    </button>
+          {/* Add Transaction & Import CSV Buttons */}
+          <div style={{ marginBottom: '2rem' }}>
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => setShowTransactionForm(!showTransactionForm)}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  background: '#2563eb',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  color: 'white',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  fontSize: '0.875rem',
+                  fontWeight: '600'
+                }}
+              >
+                <Plus size={16} />
+                Add Transaction
+              </button>
+              
+              <button
+                onClick={() => setShowImportForm(!showImportForm)}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  background: '#059669',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  color: 'white',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  fontSize: '0.875rem',
+                  fontWeight: '600'
+                }}
+              >
+                <Upload size={16} />
+                Import CSV
+              </button>
 
-    <button
-      onClick={() => {
-        if (portfolioDetails?.holdings && portfolioDetails.holdings.length > 0) {
-          const holdingsWithCalculations = portfolioDetails.holdings.map(holding => {
-            const currentPrice = currentPrices[holding.symbol] || parseFloat(holding.average_cost);
-            const shares = parseFloat(holding.total_shares);
-            const avgCost = parseFloat(holding.average_cost);
-            const totalCost = parseFloat(holding.total_cost);
-            const marketValue = shares * currentPrice;
-            const gainLoss = marketValue - totalCost;
-            const gainLossPercent = (gainLoss / totalCost) * 100;
-            const percentOfPortfolio = (marketValue / totalValue) * 100;
-            
-            return {
-              ...holding,
-              currentPrice,
-              marketValue,
-              gainLoss,
-              gainLossPercent,
-              portfolioPercent: percentOfPortfolio
-            };
-          });
-          
-          const formattedData = formatPortfolioForExport(holdingsWithCalculations);
-          const portfolioName = portfolios.find(p => p.id === selectedPortfolio)?.name || 'portfolio';
-          exportToCSV(formattedData, `portfolio_${portfolioName}`);
-        } else {
-          alert('No holdings to export');
-        }
-      }}
-      disabled={!portfolioDetails?.holdings || portfolioDetails.holdings.length === 0}
-      style={{
-        padding: '0.75rem 1.5rem',
-        background: portfolioDetails?.holdings?.length > 0 ? '#059669' : '#475569',
-        border: 'none',
-        borderRadius: '0.5rem',
-        color: 'white',
-        cursor: portfolioDetails?.holdings?.length > 0 ? 'pointer' : 'not-allowed',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.5rem',
-        fontSize: '0.875rem',
-        fontWeight: '600'
-      }}
-    >
-      <Download size={16} />
-      Export CSV
-    </button>
-  </div>
-</div>
-
-
-
+              <button
+                onClick={() => {
+                  if (portfolioDetails?.holdings && portfolioDetails.holdings.length > 0) {
+                    const holdingsWithCalculations = portfolioDetails.holdings.map(holding => {
+                      const currentPrice = currentPrices[holding.symbol] || parseFloat(holding.purchase_price || holding.average_cost || 0);
+                      const shares = parseFloat(holding.shares || holding.total_shares || 0);
+                      const avgCost = parseFloat(holding.purchase_price || holding.average_cost || 0);
+                      const totalCost = parseFloat(holding.total_cost || 0);
+                      const marketValue = shares * currentPrice;
+                      const gainLoss = marketValue - totalCost;
+                      const gainLossPercent = totalCost > 0 ? (gainLoss / totalCost) * 100 : 0;
+                      const percentOfPortfolio = totalValue > 0 ? (marketValue / totalValue) * 100 : 0;
+                      
+                      return {
+                        ...holding,
+                        currentPrice,
+                        marketValue,
+                        gainLoss,
+                        gainLossPercent,
+                        portfolioPercent: percentOfPortfolio
+                      };
+                    });
+                    
+                    const formattedData = formatPortfolioForExport(holdingsWithCalculations);
+                    const portfolioName = portfolios.find(p => p.id === selectedPortfolio)?.name || 'portfolio';
+                    exportToCSV(formattedData, `portfolio_${portfolioName}`);
+                  } else {
+                    alert('No holdings to export');
+                  }
+                }}
+                disabled={!portfolioDetails?.holdings || portfolioDetails.holdings.length === 0}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  background: portfolioDetails?.holdings?.length > 0 ? '#059669' : '#475569',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  color: 'white',
+                  cursor: portfolioDetails?.holdings?.length > 0 ? 'pointer' : 'not-allowed',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  fontSize: '0.875rem',
+                  fontWeight: '600'
+                }}
+              >
+                <Download size={16} />
+                Export CSV
+              </button>
+            </div>
+          </div>
 
           {/* Import CSV Form */}
           {showImportForm && (
@@ -990,10 +978,6 @@ const renderPerformanceChart = () => {
               </div>
             </div>
           )}
-
-
-
-
 
           {/* Transaction Form */}
           {showTransactionForm && (
@@ -1188,85 +1172,81 @@ const renderPerformanceChart = () => {
                 <p style={{ color: '#94a3b8' }}>No holdings yet. Add your first transaction!</p>
               </div>
             ) : (
-             
-<MobileTable>
-    <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '900px' }}>
-      <thead>
-    <tr style={{ background: '#1e293b' }}>
-      <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.875rem', color: '#94a3b8', fontWeight: '600' }}>Symbol</th>
-      <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem', color: '#94a3b8', fontWeight: '600' }}>Shares</th>
-      <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem', color: '#94a3b8', fontWeight: '600' }}>Avg Cost</th>
-      <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem', color: '#94a3b8', fontWeight: '600' }}>Current Price</th>
-      <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem', color: '#94a3b8', fontWeight: '600' }}>Total Cost</th>
-      <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem', color: '#94a3b8', fontWeight: '600' }}>Market Value</th>
-      <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem', color: '#94a3b8', fontWeight: '600' }}>Gain/Loss $</th>
-      <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem', color: '#94a3b8', fontWeight: '600' }}>Gain/Loss %</th>
-      <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem', color: '#94a3b8', fontWeight: '600' }}>% of Portfolio</th>
-    </tr>
-  </thead>
-  <tbody>
-    {portfolioDetails.holdings.map((holding) => {
-      const currentPrice = currentPrices[holding.symbol] || parseFloat(holding.average_cost);
-      const shares = parseFloat(holding.total_shares);
-      const avgCost = parseFloat(holding.average_cost);
-      const totalCost = parseFloat(holding.total_cost);
-      const marketValue = shares * currentPrice;
-      const gainLoss = marketValue - totalCost;
-      const gainLossPercent = (gainLoss / totalCost) * 100;
-      const percentOfPortfolio = (marketValue / totalValue) * 100;
+              <MobileTable>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '900px' }}>
+                  <thead>
+                    <tr style={{ background: '#1e293b' }}>
+                      <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.875rem', color: '#94a3b8', fontWeight: '600' }}>Symbol</th>
+                      <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem', color: '#94a3b8', fontWeight: '600' }}>Shares</th>
+                      <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem', color: '#94a3b8', fontWeight: '600' }}>Avg Cost</th>
+                      <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem', color: '#94a3b8', fontWeight: '600' }}>Current Price</th>
+                      <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem', color: '#94a3b8', fontWeight: '600' }}>Total Cost</th>
+                      <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem', color: '#94a3b8', fontWeight: '600' }}>Market Value</th>
+                      <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem', color: '#94a3b8', fontWeight: '600' }}>Gain/Loss $</th>
+                      <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem', color: '#94a3b8', fontWeight: '600' }}>Gain/Loss %</th>
+                      <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem', color: '#94a3b8', fontWeight: '600' }}>% of Portfolio</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {portfolioDetails.holdings.map((holding) => {
+                      const currentPrice = currentPrices[holding.symbol] || parseFloat(holding.purchase_price || holding.average_cost || 0);
+                      const shares = parseFloat(holding.shares || holding.total_shares || 0);
+                      const avgCost = parseFloat(holding.purchase_price || holding.average_cost || 0);
+                      const totalCost = parseFloat(holding.total_cost || 0);
+                      const marketValue = shares * currentPrice;
+                      const gainLoss = marketValue - totalCost;
+                      const gainLossPercent = totalCost > 0 ? (gainLoss / totalCost) * 100 : 0;
+                      const percentOfPortfolio = totalValue > 0 ? (marketValue / totalValue) * 100 : 0;
 
-      return (
-        <tr key={holding.id} style={{ borderTop: '1px solid #334155' }}>
-          <td style={{ padding: '1rem', fontSize: '0.875rem', fontWeight: '600', color: '#60a5fa' }}>
-            {holding.symbol}
-          </td>
-          <td style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem' }}>
-            {shares.toFixed(6)}
-          </td>
-          <td style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem' }}>
-            ${avgCost.toFixed(2)}
-          </td>
-          <td style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem' }}>
-            ${currentPrice.toFixed(2)}
-          </td>
-          <td style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem' }}>
-            ${totalCost.toFixed(2)}
-          </td>
-          <td style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem', fontWeight: '600' }}>
-            ${marketValue.toFixed(2)}
-          </td>
-          <td style={{ 
-            padding: '1rem', 
-            textAlign: 'right', 
-            fontSize: '0.875rem', 
-            fontWeight: '600', 
-            color: gainLoss >= 0 ? '#10b981' : '#ef4444' 
-          }}>
-            {gainLoss >= 0 ? '+' : ''}${gainLoss.toFixed(2)}
-          </td>
-          <td style={{ 
-            padding: '1rem', 
-            textAlign: 'right', 
-            fontSize: '0.875rem', 
-            fontWeight: '600', 
-            color: gainLoss >= 0 ? '#10b981' : '#ef4444' 
-          }}>
-            {gainLoss >= 0 ? '+' : ''}{gainLossPercent.toFixed(2)}%
-          </td>
-          <td style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem' }}>
-            {percentOfPortfolio.toFixed(2)}%
-          </td>
-        </tr>
-      );
-    })}
-  
-</tbody>
-    </table>
-  </MobileTable>
-)}
-          
-
-</div>
+                      return (
+                        <tr key={holding.id} style={{ borderTop: '1px solid #334155' }}>
+                          <td style={{ padding: '1rem', fontSize: '0.875rem', fontWeight: '600', color: '#60a5fa' }}>
+                            {holding.symbol}
+                          </td>
+                          <td style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem' }}>
+                            {shares.toFixed(6)}
+                          </td>
+                          <td style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem' }}>
+                            ${avgCost.toFixed(2)}
+                          </td>
+                          <td style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem' }}>
+                            ${currentPrice.toFixed(2)}
+                          </td>
+                          <td style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem' }}>
+                            ${totalCost.toFixed(2)}
+                          </td>
+                          <td style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem', fontWeight: '600' }}>
+                            ${marketValue.toFixed(2)}
+                          </td>
+                          <td style={{ 
+                            padding: '1rem', 
+                            textAlign: 'right', 
+                            fontSize: '0.875rem', 
+                            fontWeight: '600', 
+                            color: gainLoss >= 0 ? '#10b981' : '#ef4444' 
+                          }}>
+                            {gainLoss >= 0 ? '+' : ''}${gainLoss.toFixed(2)}
+                          </td>
+                          <td style={{ 
+                            padding: '1rem', 
+                            textAlign: 'right', 
+                            fontSize: '0.875rem', 
+                            fontWeight: '600', 
+                            color: gainLoss >= 0 ? '#10b981' : '#ef4444' 
+                          }}>
+                            {gainLoss >= 0 ? '+' : ''}{gainLossPercent.toFixed(2)}%
+                          </td>
+                          <td style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem' }}>
+                            {percentOfPortfolio.toFixed(2)}%
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </MobileTable>
+            )}
+          </div>
 
           {/* Transaction History */}
           <div>
