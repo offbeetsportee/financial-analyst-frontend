@@ -369,7 +369,7 @@ const OptionsChainExplorer = ({ symbol: initialSymbol, underlyingPrice: initialP
         </div>
 
         {/* Stock Search Bar */}
-        <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
+        <div style={{ position: 'relative', marginBottom: '1.5rem', maxWidth: '500px' }}>
           <StockSearchInput
             searchQuery={searchQuery}
             handleSearchChange={handleSearchChange}
