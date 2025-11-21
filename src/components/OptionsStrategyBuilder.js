@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   TrendingUp, TrendingDown, Plus, X, Save, Download, 
   Calculator, BarChart3, AlertCircle, Info, Zap, DollarSign,
-  Loader, RefreshCw, Eye, EyeOff, Copy, Trash2, Activity
+  Loader, RefreshCw, Eye, EyeOff, Copy, Trash2, Activity, Search
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Area } from 'recharts';
 
@@ -673,22 +673,13 @@ const OptionsStrategyBuilder = ({ symbol: initialSymbol, underlyingPrice: initia
         </div>
         <div>
           <label style={{ display: 'block', fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.5rem', fontWeight: '500' }}>
-            Symbol
+            Symbol (Search)
           </label>
-          <input
-            type="text"
-            value={currentSymbol}
-            onChange={(e) => setCurrentSymbol(e.target.value.toUpperCase())}
-            placeholder="AAPL"
-            style={{
-              width: '100%',
-              padding: '0.75rem',
-              background: '#1e293b',
-              border: '1px solid #334155',
-              borderRadius: '0.5rem',
-              color: 'white',
-              fontSize: '0.875rem',
-              boxSizing: 'border-box'
+          <StockSearchInline 
+            currentSymbol={currentSymbol}
+            onSelectStock={(symbol) => {
+              setCurrentSymbol(symbol);
+              fetchOptionsData();
             }}
           />
         </div>
@@ -1175,5 +1166,146 @@ const GreekRow = ({ label, value, description, color }) => (
     <div style={{ fontSize: '0.7rem', color: '#64748b' }}>{description}</div>
   </div>
 );
+
+// Inline Stock Search Component
+const StockSearchInline = ({ currentSymbol, onSelectStock }) => {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const searchRef = React.useRef(null);
+
+  const API_URL = process.env.REACT_APP_API_URL || 'https://financial-analyst-backend-production-7175.up.railway.app/api';
+
+  // Close dropdown when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Search with debounce
+  React.useEffect(() => {
+    if (query.length < 1) {
+      setResults([]);
+      setIsOpen(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(`${API_URL}/stocks/search?q=${encodeURIComponent(query)}`);
+        const data = await response.json();
+        setResults(data || []);
+        setIsOpen(true);
+      } catch (error) {
+        console.error('Search error:', error);
+        setResults([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  const handleSelect = (symbol) => {
+    setQuery('');
+    setResults([]);
+    setIsOpen(false);
+    onSelectStock(symbol);
+  };
+
+  return (
+    <div ref={searchRef} style={{ position: 'relative', width: '100%' }}>
+      <div style={{
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        background: '#1e293b',
+        borderRadius: '0.5rem',
+        border: '1px solid #334155',
+        padding: '0.75rem',
+        gap: '0.5rem'
+      }}>
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onFocus={() => query && setIsOpen(true)}
+          placeholder={currentSymbol || "Search stocks..."}
+          style={{
+            flex: 1,
+            background: 'none',
+            border: 'none',
+            outline: 'none',
+            color: 'white',
+            fontSize: '0.875rem'
+          }}
+        />
+        {currentSymbol && !query && (
+          <span style={{ 
+            fontSize: '0.875rem', 
+            color: '#8b5cf6', 
+            fontWeight: '600',
+            position: 'absolute',
+            left: '0.75rem',
+            pointerEvents: 'none'
+          }}>
+            {currentSymbol}
+          </span>
+        )}
+        {loading && <Loader size={16} className="spin" color="#60a5fa" />}
+      </div>
+
+      {isOpen && results.length > 0 && (
+        <div style={{
+          position: 'absolute',
+          top: 'calc(100% + 0.5rem)',
+          left: 0,
+          right: 0,
+          background: 'rgba(15, 23, 42, 0.98)',
+          border: '1px solid #475569',
+          borderRadius: '0.5rem',
+          maxHeight: '300px',
+          overflowY: 'auto',
+          zIndex: 1000,
+          boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5)'
+        }}>
+          {results.map((stock, idx) => (
+            <div
+              key={idx}
+              onClick={() => handleSelect(stock.symbol)}
+              style={{
+                padding: '0.75rem 1rem',
+                cursor: 'pointer',
+                borderBottom: idx < results.length - 1 ? '1px solid #334155' : 'none',
+                transition: 'background 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(139, 92, 246, 0.1)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+            >
+              <div style={{ fontWeight: '600', color: '#8b5cf6', fontSize: '0.875rem' }}>
+                {stock.symbol}
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#cbd5e1', marginTop: '0.125rem' }}>
+                {stock.name}
+              </div>
+              <div style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '0.125rem' }}>
+                {stock.type}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default OptionsStrategyBuilder;
