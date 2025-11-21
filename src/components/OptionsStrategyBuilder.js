@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   TrendingUp, TrendingDown, Plus, X, Save, Download, 
   Calculator, BarChart3, AlertCircle, Info, Zap, DollarSign,
-  Loader, RefreshCw, Eye, EyeOff, Copy, Trash2, Activity, Search
+  Loader, RefreshCw, Eye, EyeOff, Trash2, Activity, Search,
+  HelpCircle, Sparkles, ChevronDown, ChevronUp
 } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Area } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 
 const OptionsStrategyBuilder = ({ symbol: initialSymbol, underlyingPrice: initialPrice }) => {
   const [currentSymbol, setCurrentSymbol] = useState(initialSymbol || '');
@@ -13,6 +14,9 @@ const OptionsStrategyBuilder = ({ symbol: initialSymbol, underlyingPrice: initia
   const [strategyName, setStrategyName] = useState('Custom Strategy');
   const [savedStrategies, setSavedStrategies] = useState([]);
   const [showSaved, setShowSaved] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const [showAIChat, setShowAIChat] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   
   // Options data
   const [optionsData, setOptionsData] = useState(null);
@@ -26,6 +30,13 @@ const OptionsStrategyBuilder = ({ symbol: initialSymbol, underlyingPrice: initia
   const [breakevens, setBreakevens] = useState([]);
 
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+
+  // Handle window resize for mobile detection
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Common strategy templates
   const STRATEGY_TEMPLATES = {
@@ -81,18 +92,12 @@ const OptionsStrategyBuilder = ({ symbol: initialSymbol, underlyingPrice: initia
   };
 
   useEffect(() => {
-    if (initialSymbol) {
-      setCurrentSymbol(initialSymbol);
-    }
-    if (initialPrice) {
-      setCurrentPrice(initialPrice);
-    }
+    if (initialSymbol) setCurrentSymbol(initialSymbol);
+    if (initialPrice) setCurrentPrice(initialPrice);
   }, [initialSymbol, initialPrice]);
 
   useEffect(() => {
-    if (currentSymbol) {
-      fetchOptionsData();
-    }
+    if (currentSymbol) fetchOptionsData();
   }, [currentSymbol]);
 
   useEffect(() => {
@@ -108,7 +113,7 @@ const OptionsStrategyBuilder = ({ symbol: initialSymbol, underlyingPrice: initia
     }
   }, [legs, currentPrice]);
 
-  // Load saved strategies from localStorage
+  // Load saved strategies
   useEffect(() => {
     const saved = localStorage.getItem('optionsStrategies');
     if (saved) {
@@ -123,26 +128,20 @@ const OptionsStrategyBuilder = ({ symbol: initialSymbol, underlyingPrice: initia
   const fetchOptionsData = async () => {
     setLoading(true);
     try {
-      // Fetch expirations
-      const expResponse = await fetch(`${API_URL}/options/${currentSymbol}/expirations`);
+      const [expResponse, chainResponse, priceResponse] = await Promise.all([
+        fetch(`${API_URL}/options/${currentSymbol}/expirations`),
+        fetch(`${API_URL}/options/${currentSymbol}`),
+        fetch(`${API_URL}/stocks/${currentSymbol}`)
+      ]);
+
       const expData = await expResponse.json();
-      if (expData.success) {
-        setExpirations(expData.expirations);
-      }
+      if (expData.success) setExpirations(expData.expirations);
 
-      // Fetch options chain
-      const chainResponse = await fetch(`${API_URL}/options/${currentSymbol}`);
       const chainData = await chainResponse.json();
-      if (chainData.success) {
-        setOptionsData(chainData.data);
-      }
+      if (chainData.success) setOptionsData(chainData.data);
 
-      // Fetch current stock price
-      const priceResponse = await fetch(`${API_URL}/stocks/${currentSymbol}`);
       const priceData = await priceResponse.json();
-      if (priceData.currentPrice) {
-        setCurrentPrice(priceData.currentPrice);
-      }
+      if (priceData.currentPrice) setCurrentPrice(priceData.currentPrice);
     } catch (error) {
       console.error('Failed to fetch options data:', error);
     } finally {
@@ -206,7 +205,6 @@ const OptionsStrategyBuilder = ({ symbol: initialSymbol, underlyingPrice: initia
         return;
       }
 
-      // Find appropriate strike based on moneyness
       let strike = currentPrice;
       const options = legTemplate.type === 'call' ? optionsData.calls : optionsData.puts;
       
@@ -232,7 +230,6 @@ const OptionsStrategyBuilder = ({ symbol: initialSymbol, underlyingPrice: initia
             break;
         }
 
-        // Find the option at this strike
         const option = options.find(o => o.strike === strike);
         
         newLegs.push({
@@ -261,7 +258,6 @@ const OptionsStrategyBuilder = ({ symbol: initialSymbol, underlyingPrice: initia
   const calculatePL = () => {
     if (legs.length === 0) return;
 
-    // Calculate P/L across a range of stock prices
     const minPrice = currentPrice * 0.7;
     const maxPrice = currentPrice * 1.3;
     const step = (maxPrice - minPrice) / 100;
@@ -289,7 +285,6 @@ const OptionsStrategyBuilder = ({ symbol: initialSymbol, underlyingPrice: initia
 
       data.push({ price: parseFloat(price.toFixed(2)), pl: totalPL });
 
-      // Detect breakeven points (where P/L crosses zero)
       if (prevPL !== null) {
         if ((prevPL < 0 && totalPL >= 0) || (prevPL >= 0 && totalPL < 0)) {
           breakevens.push(price);
@@ -305,10 +300,7 @@ const OptionsStrategyBuilder = ({ symbol: initialSymbol, underlyingPrice: initia
   const calculateGreeks = () => {
     if (legs.length === 0) return;
 
-    let totalDelta = 0;
-    let totalGamma = 0;
-    let totalTheta = 0;
-    let totalVega = 0;
+    let totalDelta = 0, totalGamma = 0, totalTheta = 0, totalVega = 0;
 
     legs.forEach(leg => {
       const multiplier = leg.position === 'long' ? 1 : -1;
@@ -320,21 +312,13 @@ const OptionsStrategyBuilder = ({ symbol: initialSymbol, underlyingPrice: initia
       totalVega += leg.vega * multiplier * contracts;
     });
 
-    setGreeks({
-      delta: totalDelta,
-      gamma: totalGamma,
-      theta: totalTheta,
-      vega: totalVega
-    });
+    setGreeks({ delta: totalDelta, gamma: totalGamma, theta: totalTheta, vega: totalVega });
   };
 
   const calculateMetrics = () => {
     if (legs.length === 0 || plData.length === 0) return;
 
-    // Calculate max profit, max loss, initial cost
-    let maxProfit = -Infinity;
-    let maxLoss = Infinity;
-    let initialCost = 0;
+    let maxProfit = -Infinity, maxLoss = Infinity, initialCost = 0;
 
     plData.forEach(point => {
       maxProfit = Math.max(maxProfit, point.pl);
@@ -346,11 +330,8 @@ const OptionsStrategyBuilder = ({ symbol: initialSymbol, underlyingPrice: initia
       initialCost += leg.position === 'long' ? cost : -cost;
     });
 
-    // Calculate probability of profit (simplified)
     const profitablePoints = plData.filter(p => p.pl > 0).length;
     const pop = (profitablePoints / plData.length) * 100;
-
-    // Risk/Reward ratio
     const riskRewardRatio = maxProfit !== Infinity && maxLoss !== -Infinity 
       ? Math.abs(maxProfit / maxLoss) 
       : 0;
@@ -447,29 +428,80 @@ const OptionsStrategyBuilder = ({ symbol: initialSymbol, underlyingPrice: initia
   };
 
   return (
-    <div>
-      {/* Header */}
+    <div style={{ paddingBottom: isMobile ? '4rem' : '2rem' }}>
+      {/* Mobile-Optimized Header */}
       <div style={{ 
         background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', 
-        borderRadius: '0.75rem', 
-        padding: '2rem', 
-        marginBottom: '2rem'
+        borderRadius: isMobile ? '0.5rem' : '0.75rem',
+        padding: isMobile ? '1rem' : '1.5rem',
+        marginBottom: '1.5rem'
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <h2 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Calculator size={32} color="white" />
-              Options Strategy Builder
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+          <div style={{ flex: '1 1 auto', minWidth: '200px' }}>
+            <h2 style={{ 
+              fontSize: isMobile ? '1.25rem' : '2rem',
+              fontWeight: 'bold', 
+              marginBottom: '0.25rem', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.5rem',
+              flexWrap: 'wrap'
+            }}>
+              <Calculator size={isMobile ? 24 : 32} color="white" />
+              <span style={{ wordBreak: 'break-word' }}>Strategy Builder</span>
             </h2>
-            <p style={{ color: '#ddd6fe', fontSize: '1rem', margin: 0 }}>
-              Build and analyze multi-leg options strategies
+            <p style={{ color: '#e9d5ff', fontSize: isMobile ? '0.75rem' : '0.875rem', margin: 0 }}>
+              Build and analyze options strategies
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            <button
+              onClick={() => setShowHelp(true)}
+              style={{
+                padding: '0.625rem',
+                background: 'rgba(255, 255, 255, 0.2)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: '0.5rem',
+                color: 'white',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '0.875rem',
+                fontWeight: '600'
+              }}
+              title="Help & Guide"
+            >
+              <HelpCircle size={16} />
+              {!isMobile && <span>Help</span>}
+            </button>
+            
+            <button
+              onClick={() => setShowAIChat(!showAIChat)}
+              style={{
+                padding: '0.625rem',
+                background: showAIChat ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.2)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: '0.5rem',
+                color: 'white',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '0.875rem',
+                fontWeight: '600'
+              }}
+              title="AI Assistant"
+            >
+              <Sparkles size={16} />
+              {!isMobile && <span>AI</span>}
+            </button>
+            
             <button
               onClick={() => setShowSaved(!showSaved)}
               style={{
-                padding: '0.75rem 1rem',
+                padding: '0.625rem',
                 background: 'rgba(255, 255, 255, 0.2)',
                 border: '1px solid rgba(255, 255, 255, 0.3)',
                 borderRadius: '0.5rem',
@@ -483,47 +515,43 @@ const OptionsStrategyBuilder = ({ symbol: initialSymbol, underlyingPrice: initia
               }}
             >
               {showSaved ? <EyeOff size={16} /> : <Eye size={16} />}
-              {showSaved ? 'Hide' : 'View'} Saved ({savedStrategies.length})
+              {!isMobile && <span>Saved</span>}
+              <span>({savedStrategies.length})</span>
             </button>
+            
             {legs.length > 0 && (
               <>
                 <button
                   onClick={saveStrategy}
                   style={{
-                    padding: '0.75rem 1rem',
+                    padding: '0.625rem',
                     background: 'rgba(255, 255, 255, 0.2)',
                     border: '1px solid rgba(255, 255, 255, 0.3)',
                     borderRadius: '0.5rem',
                     color: 'white',
                     cursor: 'pointer',
                     display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    fontSize: '0.875rem',
-                    fontWeight: '600'
+                    alignItems: 'center'
                   }}
+                  title="Save"
                 >
                   <Save size={16} />
-                  Save
                 </button>
                 <button
                   onClick={exportStrategy}
                   style={{
-                    padding: '0.75rem 1rem',
+                    padding: '0.625rem',
                     background: 'rgba(255, 255, 255, 0.2)',
                     border: '1px solid rgba(255, 255, 255, 0.3)',
                     borderRadius: '0.5rem',
                     color: 'white',
                     cursor: 'pointer',
                     display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    fontSize: '0.875rem',
-                    fontWeight: '600'
+                    alignItems: 'center'
                   }}
+                  title="Export"
                 >
                   <Download size={16} />
-                  Export
                 </button>
               </>
             )}
@@ -537,10 +565,10 @@ const OptionsStrategyBuilder = ({ symbol: initialSymbol, underlyingPrice: initia
           background: 'rgba(30, 41, 59, 0.5)',
           border: '1px solid #334155',
           borderRadius: '0.75rem',
-          padding: '1.5rem',
-          marginBottom: '2rem'
+          padding: isMobile ? '1rem' : '1.5rem',
+          marginBottom: '1.5rem'
         }}>
-          <h3 style={{ fontSize: '1.125rem', marginBottom: '1rem', fontWeight: '600' }}>
+          <h3 style={{ fontSize: isMobile ? '1rem' : '1.125rem', marginBottom: '1rem', fontWeight: '600' }}>
             Saved Strategies
           </h3>
           {savedStrategies.length === 0 ? (
@@ -556,19 +584,20 @@ const OptionsStrategyBuilder = ({ symbol: initialSymbol, underlyingPrice: initia
                     background: 'rgba(51, 65, 85, 0.5)',
                     border: '1px solid #475569',
                     borderRadius: '0.5rem',
-                    padding: '1rem',
+                    padding: isMobile ? '0.75rem' : '1rem',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    gap: '1rem'
+                    gap: '1rem',
+                    flexWrap: isMobile ? 'wrap' : 'nowrap'
                   }}
                 >
-                  <div>
+                  <div style={{ flex: 1, minWidth: '150px' }}>
                     <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#cbd5e1' }}>
                       {strategy.name}
                     </div>
                     <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.25rem' }}>
-                      {strategy.symbol} @ ${strategy.underlyingPrice.toFixed(2)} • {strategy.legs.length} legs • {new Date(strategy.createdAt).toLocaleDateString()}
+                      {strategy.symbol} @ ${strategy.underlyingPrice.toFixed(2)} • {strategy.legs.length} legs
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -615,30 +644,43 @@ const OptionsStrategyBuilder = ({ symbol: initialSymbol, underlyingPrice: initia
         background: 'rgba(30, 41, 59, 0.5)',
         border: '1px solid #334155',
         borderRadius: '0.75rem',
-        padding: '1.5rem',
-        marginBottom: '2rem'
+        padding: isMobile ? '1rem' : '1.5rem',
+        marginBottom: '1.5rem'
       }}>
-        <h3 style={{ fontSize: '1.125rem', marginBottom: '1rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <h3 style={{ 
+          fontSize: isMobile ? '1rem' : '1.125rem',
+          marginBottom: '1rem', 
+          fontWeight: '600', 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '0.5rem' 
+        }}>
           <Zap size={18} color="#f59e0b" />
           Quick Templates
         </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '0.5rem' }}>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(140px, 1fr))',
+          gap: '0.5rem' 
+        }}>
           {Object.keys(STRATEGY_TEMPLATES).map(name => (
             <button
               key={name}
               onClick={() => loadTemplate(name)}
               disabled={!currentSymbol}
               style={{
-                padding: '0.75rem',
+                padding: isMobile ? '0.625rem 0.5rem' : '0.75rem',
                 background: 'rgba(139, 92, 246, 0.2)',
                 border: '1px solid rgba(139, 92, 246, 0.3)',
                 borderRadius: '0.5rem',
                 color: '#c4b5fd',
                 cursor: currentSymbol ? 'pointer' : 'not-allowed',
-                fontSize: '0.75rem',
+                fontSize: isMobile ? '0.7rem' : '0.75rem',
                 fontWeight: '600',
                 opacity: currentSymbol ? 1 : 0.5,
-                transition: 'all 0.2s'
+                transition: 'all 0.2s',
+                textAlign: 'center',
+                wordBreak: 'break-word'
               }}
               onMouseEnter={(e) => currentSymbol && (e.currentTarget.style.background = 'rgba(139, 92, 246, 0.3)')}
               onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(139, 92, 246, 0.2)')}
@@ -649,8 +691,13 @@ const OptionsStrategyBuilder = ({ symbol: initialSymbol, underlyingPrice: initia
         </div>
       </div>
 
-      {/* Strategy Name & Symbol */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '1rem', marginBottom: '2rem' }}>
+      {/* Strategy Configuration */}
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr auto',
+        gap: '1rem', 
+        marginBottom: '1.5rem' 
+      }}>
         <div>
           <label style={{ display: 'block', fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.5rem', fontWeight: '500' }}>
             Strategy Name
@@ -673,7 +720,7 @@ const OptionsStrategyBuilder = ({ symbol: initialSymbol, underlyingPrice: initia
         </div>
         <div>
           <label style={{ display: 'block', fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.5rem', fontWeight: '500' }}>
-            Symbol (Search)
+            Symbol
           </label>
           <StockSearchInline 
             currentSymbol={currentSymbol}
@@ -693,7 +740,7 @@ const OptionsStrategyBuilder = ({ symbol: initialSymbol, underlyingPrice: initia
             onChange={(e) => setCurrentPrice(parseFloat(e.target.value) || 0)}
             step="0.01"
             style={{
-              width: '120px',
+              width: isMobile ? '100%' : '120px',
               padding: '0.75rem',
               background: '#1e293b',
               border: '1px solid #334155',
@@ -705,23 +752,23 @@ const OptionsStrategyBuilder = ({ symbol: initialSymbol, underlyingPrice: initia
         </div>
       </div>
 
-      {/* Legs */}
+      {/* Strategy Legs */}
       <div style={{
         background: 'rgba(30, 41, 59, 0.5)',
         border: '1px solid #334155',
         borderRadius: '0.75rem',
-        padding: '1.5rem',
-        marginBottom: '2rem'
+        padding: isMobile ? '1rem' : '1.5rem',
+        marginBottom: '1.5rem'
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h3 style={{ fontSize: '1.125rem', margin: 0, fontWeight: '600' }}>
+          <h3 style={{ fontSize: isMobile ? '1rem' : '1.125rem', margin: 0, fontWeight: '600' }}>
             Strategy Legs
           </h3>
           <button
             onClick={addLeg}
             disabled={!currentSymbol}
             style={{
-              padding: '0.5rem 1rem',
+              padding: isMobile ? '0.5rem 0.75rem' : '0.5rem 1rem',
               background: !currentSymbol ? '#6b7280' : '#10b981',
               border: 'none',
               borderRadius: '0.5rem',
@@ -735,14 +782,16 @@ const OptionsStrategyBuilder = ({ symbol: initialSymbol, underlyingPrice: initia
             }}
           >
             <Plus size={16} />
-            Add Leg
+            {!isMobile && 'Add Leg'}
           </button>
         </div>
 
         {legs.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
+          <div style={{ textAlign: 'center', padding: isMobile ? '1.5rem 1rem' : '2rem', color: '#94a3b8' }}>
             <Calculator size={48} color="#94a3b8" style={{ margin: '0 auto 1rem' }} />
-            <p style={{ margin: 0 }}>No legs added yet. Add a leg or select a template to get started.</p>
+            <p style={{ margin: 0, fontSize: isMobile ? '0.875rem' : '1rem' }}>
+              No legs added yet. Add a leg or select a template to get started.
+            </p>
           </div>
         ) : (
           <div style={{ display: 'grid', gap: '1rem' }}>
@@ -754,13 +803,14 @@ const OptionsStrategyBuilder = ({ symbol: initialSymbol, underlyingPrice: initia
                 onUpdate={updateLeg}
                 onRemove={removeLeg}
                 expirations={expirations}
+                isMobile={isMobile}
               />
             ))}
           </div>
         )}
       </div>
 
-      {/* Analysis */}
+      {/* Analysis Section */}
       {legs.length > 0 && (
         <>
           {/* P/L Chart */}
@@ -768,40 +818,42 @@ const OptionsStrategyBuilder = ({ symbol: initialSymbol, underlyingPrice: initia
             background: 'rgba(30, 41, 59, 0.5)',
             border: '1px solid #334155',
             borderRadius: '0.75rem',
-            padding: '1.5rem',
-            marginBottom: '2rem'
+            padding: isMobile ? '1rem' : '1.5rem',
+            marginBottom: '1.5rem'
           }}>
-            <h3 style={{ fontSize: '1.125rem', marginBottom: '1.5rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <h3 style={{ 
+              fontSize: isMobile ? '1rem' : '1.125rem',
+              marginBottom: '1rem', 
+              fontWeight: '600', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.5rem' 
+            }}>
               <BarChart3 size={20} color="#60a5fa" />
               Profit/Loss Diagram
             </h3>
-            <ResponsiveContainer width="100%" height={400}>
+            <ResponsiveContainer width="100%" height={isMobile ? 300 : 400}>
               <LineChart data={plData}>
-                <defs>
-                  <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#10b981" stopOpacity={0.3}/>
-                    <stop offset="100%" stopColor="#10b981" stopOpacity={0}/>
-                  </linearGradient>
-                  <linearGradient id="colorLoss" x1="0" y1="1" x2="0" y2="0">
-                    <stop offset="0%" stopColor="#ef4444" stopOpacity={0.3}/>
-                    <stop offset="100%" stopColor="#ef4444" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                 <XAxis
                   dataKey="price"
                   stroke="#94a3b8"
-                  tick={{ fill: '#94a3b8', fontSize: 12 }}
+                  tick={{ fill: '#94a3b8', fontSize: isMobile ? 10 : 12 }}
                   tickFormatter={(value) => `$${value.toFixed(0)}`}
                 />
                 <YAxis
                   stroke="#94a3b8"
-                  tick={{ fill: '#94a3b8', fontSize: 12 }}
+                  tick={{ fill: '#94a3b8', fontSize: isMobile ? 10 : 12 }}
                   tickFormatter={(value) => `$${value.toFixed(0)}`}
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <ReferenceLine y={0} stroke="#64748b" strokeDasharray="3 3" />
-                <ReferenceLine x={currentPrice} stroke="#60a5fa" strokeDasharray="5 5" label={{ value: 'Current', fill: '#60a5fa', fontSize: 12 }} />
+                <ReferenceLine 
+                  x={currentPrice} 
+                  stroke="#60a5fa" 
+                  strokeDasharray="5 5" 
+                  label={{ value: 'Now', fill: '#60a5fa', fontSize: 12 }} 
+                />
                 {breakevens.map((be, idx) => (
                   <ReferenceLine 
                     key={idx} 
@@ -815,7 +867,7 @@ const OptionsStrategyBuilder = ({ symbol: initialSymbol, underlyingPrice: initia
                   type="monotone"
                   dataKey="pl"
                   stroke="#8b5cf6"
-                  strokeWidth={3}
+                  strokeWidth={2}
                   dot={false}
                 />
               </LineChart>
@@ -823,43 +875,62 @@ const OptionsStrategyBuilder = ({ symbol: initialSymbol, underlyingPrice: initia
           </div>
 
           {/* Metrics & Greeks */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
-            {/* Metrics */}
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+            gap: '1.5rem', 
+            marginBottom: '1.5rem' 
+          }}>
+            {/* Risk Metrics */}
             {metrics && (
               <div style={{
                 background: 'rgba(30, 41, 59, 0.5)',
                 border: '1px solid #334155',
                 borderRadius: '0.75rem',
-                padding: '1.5rem'
+                padding: isMobile ? '1rem' : '1.5rem'
               }}>
-                <h3 style={{ fontSize: '1.125rem', marginBottom: '1rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <h3 style={{ 
+                  fontSize: isMobile ? '1rem' : '1.125rem',
+                  marginBottom: '1rem', 
+                  fontWeight: '600', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.5rem' 
+                }}>
                   <DollarSign size={20} color="#10b981" />
                   Risk Metrics
                 </h3>
-                <div style={{ display: 'grid', gap: '1rem' }}>
+                <div style={{ display: 'grid', gap: '0.75rem' }}>
                   <MetricRow label="Max Profit" value={metrics.maxProfit} positive />
                   <MetricRow label="Max Loss" value={metrics.maxLoss} negative />
                   <MetricRow label="Initial Cost" value={metrics.initialCost} />
-                  <MetricRow label="Breakeven(s)" value={metrics.breakevens} />
+                  <MetricRow label="Breakeven(s)" value={metrics.breakevens} small />
                   <MetricRow label="Prob. of Profit" value={metrics.pop} />
                   <MetricRow label="Risk/Reward" value={metrics.riskReward} />
                 </div>
               </div>
             )}
 
-            {/* Greeks */}
+            {/* Position Greeks */}
             {greeks && (
               <div style={{
                 background: 'rgba(30, 41, 59, 0.5)',
                 border: '1px solid #334155',
                 borderRadius: '0.75rem',
-                padding: '1.5rem'
+                padding: isMobile ? '1rem' : '1.5rem'
               }}>
-                <h3 style={{ fontSize: '1.125rem', marginBottom: '1rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <h3 style={{ 
+                  fontSize: isMobile ? '1rem' : '1.125rem',
+                  marginBottom: '1rem', 
+                  fontWeight: '600', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.5rem' 
+                }}>
                   <Activity size={20} color="#8b5cf6" />
                   Position Greeks
                 </h3>
-                <div style={{ display: 'grid', gap: '1rem' }}>
+                <div style={{ display: 'grid', gap: '0.75rem' }}>
                   <GreekRow 
                     label="Delta" 
                     value={greeks.delta.toFixed(2)} 
@@ -888,50 +959,63 @@ const OptionsStrategyBuilder = ({ symbol: initialSymbol, underlyingPrice: initia
               </div>
             )}
           </div>
-
-          {/* Info Box */}
-          <div style={{
-            background: 'rgba(59, 130, 246, 0.1)',
-            border: '1px solid rgba(59, 130, 246, 0.3)',
-            borderRadius: '0.75rem',
-            padding: '1rem'
-          }}>
-            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'start' }}>
-              <Info size={20} color="#60a5fa" style={{ flexShrink: 0, marginTop: '0.125rem' }} />
-              <div>
-                <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', fontWeight: '600', color: '#93c5fd' }}>
-                  Understanding the Analysis
-                </h4>
-                <ul style={{ margin: 0, paddingLeft: '1.5rem', fontSize: '0.75rem', color: '#cbd5e1', lineHeight: '1.6' }}>
-                  <li><strong>P/L Diagram:</strong> Shows profit/loss at expiration across different stock prices</li>
-                  <li><strong>Breakeven Points:</strong> Stock prices where the position breaks even (marked in orange)</li>
-                  <li><strong>Greeks:</strong> Measure sensitivity to price, time, and volatility changes</li>
-                  <li><strong>Max Loss:</strong> Worst-case scenario if the strategy moves against you</li>
-                  <li><strong>Risk/Reward:</strong> Ratio of potential profit to potential loss</li>
-                </ul>
-              </div>
-            </div>
-          </div>
         </>
+      )}
+
+      {/* Help Modal */}
+      {showHelp && <HelpModal onClose={() => setShowHelp(false)} isMobile={isMobile} />}
+
+      {/* AI Assistant */}
+      {showAIChat && (
+        <AIStrategyAssistant
+          currentSymbol={currentSymbol}
+          legs={legs}
+          metrics={metrics}
+          greeks={greeks}
+          onClose={() => setShowAIChat(false)}
+          isMobile={isMobile}
+        />
       )}
     </div>
   );
 };
 
-const StrategyLeg = ({ leg, index, onUpdate, onRemove, expirations }) => {
+// Strategy Leg Component
+const StrategyLeg = ({ leg, index, onUpdate, onRemove, expirations, isMobile }) => {
+  const [isExpanded, setIsExpanded] = useState(!isMobile);
+
   return (
     <div style={{
       background: 'rgba(51, 65, 85, 0.5)',
       border: '1px solid #475569',
       borderRadius: '0.5rem',
-      padding: '1rem'
+      padding: isMobile ? '0.75rem' : '1rem'
     }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#cbd5e1' }}>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: isMobile ? '0.5rem' : '1rem',
+        cursor: isMobile ? 'pointer' : 'default'
+      }}
+      onClick={() => isMobile && setIsExpanded(!isExpanded)}
+      >
+        <div style={{ 
+          fontSize: '0.875rem', 
+          fontWeight: '600', 
+          color: '#cbd5e1',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem'
+        }}>
           Leg {index + 1}
+          {isMobile && (isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />)}
         </div>
         <button
-          onClick={() => onRemove(leg.id)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove(leg.id);
+          }}
           style={{
             background: 'rgba(239, 68, 68, 0.2)',
             border: '1px solid rgba(239, 68, 68, 0.3)',
@@ -947,156 +1031,132 @@ const StrategyLeg = ({ leg, index, onUpdate, onRemove, expirations }) => {
         </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '0.75rem' }}>
-        {/* Type */}
-        <div>
-          <label style={{ display: 'block', fontSize: '0.7rem', color: '#94a3b8', marginBottom: '0.25rem' }}>
-            Type
-          </label>
-          <select
-            value={leg.type}
-            onChange={(e) => onUpdate(leg.id, 'type', e.target.value)}
-            style={{
-              width: '100%',
-              padding: '0.5rem',
-              background: '#1e293b',
-              border: '1px solid #475569',
-              borderRadius: '0.375rem',
-              color: 'white',
-              fontSize: '0.75rem'
-            }}
-          >
-            <option value="call">Call</option>
-            <option value="put">Put</option>
-            <option value="stock">Stock</option>
-          </select>
-        </div>
-
-        {/* Position */}
-        <div>
-          <label style={{ display: 'block', fontSize: '0.7rem', color: '#94a3b8', marginBottom: '0.25rem' }}>
-            Position
-          </label>
-          <select
-            value={leg.position}
-            onChange={(e) => onUpdate(leg.id, 'position', e.target.value)}
-            style={{
-              width: '100%',
-              padding: '0.5rem',
-              background: '#1e293b',
-              border: '1px solid #475569',
-              borderRadius: '0.375rem',
-              color: leg.position === 'long' ? '#10b981' : '#ef4444',
-              fontSize: '0.75rem',
-              fontWeight: '600'
-            }}
-          >
-            <option value="long">Long</option>
-            <option value="short">Short</option>
-          </select>
-        </div>
-
-        {/* Strike */}
-        {leg.type !== 'stock' && (
+      {(!isMobile || isExpanded) && (
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fit, minmax(100px, 1fr))',
+          gap: isMobile ? '0.5rem' : '0.75rem' 
+        }}>
+          {/* Type */}
           <div>
             <label style={{ display: 'block', fontSize: '0.7rem', color: '#94a3b8', marginBottom: '0.25rem' }}>
-              Strike
-            </label>
-            <input
-              type="number"
-              value={leg.strike}
-              onChange={(e) => onUpdate(leg.id, 'strike', parseFloat(e.target.value) || 0)}
-              step="0.5"
-              style={{
-                width: '100%',
-                padding: '0.5rem',
-                background: '#1e293b',
-                border: '1px solid #475569',
-                borderRadius: '0.375rem',
-                color: 'white',
-                fontSize: '0.75rem'
-              }}
-            />
-          </div>
-        )}
-
-        {/* Quantity */}
-        <div>
-          <label style={{ display: 'block', fontSize: '0.7rem', color: '#94a3b8', marginBottom: '0.25rem' }}>
-            Quantity
-          </label>
-          <input
-            type="number"
-            value={leg.quantity}
-            onChange={(e) => onUpdate(leg.id, 'quantity', parseInt(e.target.value) || 1)}
-            min="1"
-            style={{
-              width: '100%',
-              padding: '0.5rem',
-              background: '#1e293b',
-              border: '1px solid #475569',
-              borderRadius: '0.375rem',
-              color: 'white',
-              fontSize: '0.75rem'
-            }}
-          />
-        </div>
-
-        {/* Premium */}
-        {leg.type !== 'stock' && (
-          <div>
-            <label style={{ display: 'block', fontSize: '0.7rem', color: '#94a3b8', marginBottom: '0.25rem' }}>
-              Premium
-            </label>
-            <input
-              type="number"
-              value={leg.premium}
-              onChange={(e) => onUpdate(leg.id, 'premium', parseFloat(e.target.value) || 0)}
-              step="0.01"
-              style={{
-                width: '100%',
-                padding: '0.5rem',
-                background: '#1e293b',
-                border: '1px solid #475569',
-                borderRadius: '0.375rem',
-                color: 'white',
-                fontSize: '0.75rem'
-              }}
-            />
-          </div>
-        )}
-
-        {/* Expiration */}
-        {leg.type !== 'stock' && expirations.length > 0 && (
-          <div>
-            <label style={{ display: 'block', fontSize: '0.7rem', color: '#94a3b8', marginBottom: '0.25rem' }}>
-              Expiration
+              Type
             </label>
             <select
-              value={leg.expiration || ''}
-              onChange={(e) => onUpdate(leg.id, 'expiration', e.target.value)}
+              value={leg.type}
+              onChange={(e) => onUpdate(leg.id, 'type', e.target.value)}
               style={{
                 width: '100%',
-                padding: '0.5rem',
+                padding: isMobile ? '0.5rem' : '0.5rem',
                 background: '#1e293b',
                 border: '1px solid #475569',
                 borderRadius: '0.375rem',
                 color: 'white',
-                fontSize: '0.75rem'
+                fontSize: isMobile ? '0.7rem' : '0.75rem'
               }}
             >
-              {expirations.map(exp => (
-                <option key={exp} value={exp}>
-                  {new Date(exp).toLocaleDateString()}
-                </option>
-              ))}
+              <option value="call">Call</option>
+              <option value="put">Put</option>
+              <option value="stock">Stock</option>
             </select>
           </div>
-        )}
 
-        {/* Greeks (Display only) */}
-        {leg.type !== 'stock' && (
-          <>
+          {/* Position */}
+          <div>
+            <label style={{ display: 'block', fontSize: '0.7rem', color: '#94a3b8', marginBottom: '0.25rem' }}>
+              Position
+            </label>
+            <select
+              value={leg.position}
+              onChange={(e) => onUpdate(leg.id, 'position', e.target.value)}
+              style={{
+                width: '100%',
+                padding: isMobile ? '0.5rem' : '0.5rem',
+                background: '#1e293b',
+                border: '1px solid #475569',
+                borderRadius: '0.375rem',
+                color: leg.position === 'long' ? '#10b981' : '#ef4444',
+                fontSize: isMobile ? '0.7rem' : '0.75rem',
+                fontWeight: '600'
+              }}
+            >
+              <option value="long">Long</option>
+              <option value="short">Short</option>
+            </select>
+          </div>
+
+          {/* Strike */}
+          {leg.type !== 'stock' && (
+            <div>
+              <label style={{ display: 'block', fontSize: '0.7rem', color: '#94a3b8', marginBottom: '0.25rem' }}>
+                Strike
+              </label>
+              <input
+                type="number"
+                value={leg.strike}
+                onChange={(e) => onUpdate(leg.id, 'strike', parseFloat(e.target.value) || 0)}
+                step="0.5"
+                style={{
+                  width: '100%',
+                  padding: isMobile ? '0.5rem' : '0.5rem',
+                  background: '#1e293b',
+                  border: '1px solid #475569',
+                  borderRadius: '0.375rem',
+                  color: 'white',
+                  fontSize: isMobile ? '0.7rem' : '0.75rem'
+                }}
+              />
+            </div>
+          )}
+
+          {/* Quantity */}
+          <div>
+            <label style={{ display: 'block', fontSize: '0.7rem', color: '#94a3b8', marginBottom: '0.25rem' }}>
+              Quantity
+            </label>
+            <input
+              type="number"
+              value={leg.quantity}
+              onChange={(e) => onUpdate(leg.id, 'quantity', parseInt(e.target.value) || 1)}
+              min="1"
+              style={{
+                width: '100%',
+                padding: isMobile ? '0.5rem' : '0.5rem',
+                background: '#1e293b',
+                border: '1px solid #475569',
+                borderRadius: '0.375rem',
+                color: 'white',
+                fontSize: isMobile ? '0.7rem' : '0.75rem'
+              }}
+            />
+          </div>
+
+          {/* Premium */}
+          {leg.type !== 'stock' && (
+            <div>
+              <label style={{ display: 'block', fontSize: '0.7rem', color: '#94a3b8', marginBottom: '0.25rem' }}>
+                Premium
+              </label>
+              <input
+                type="number"
+                value={leg.premium}
+                onChange={(e) => onUpdate(leg.id, 'premium', parseFloat(e.target.value) || 0)}
+                step="0.01"
+                style={{
+                  width: '100%',
+                  padding: isMobile ? '0.5rem' : '0.5rem',
+                  background: '#1e293b',
+                  border: '1px solid #475569',
+                  borderRadius: '0.375rem',
+                  color: 'white',
+                  fontSize: isMobile ? '0.7rem' : '0.75rem'
+                }}
+              />
+            </div>
+          )}
+
+          {/* Delta */}
+          {leg.type !== 'stock' && !isMobile && (
             <div>
               <label style={{ display: 'block', fontSize: '0.7rem', color: '#94a3b8', marginBottom: '0.25rem' }}>
                 Delta
@@ -1117,9 +1177,13 @@ const StrategyLeg = ({ leg, index, onUpdate, onRemove, expirations }) => {
                 }}
               />
             </div>
+          )}
+
+          {/* IV */}
+          {leg.type !== 'stock' && !isMobile && (
             <div>
               <label style={{ display: 'block', fontSize: '0.7rem', color: '#94a3b8', marginBottom: '0.25rem' }}>
-                IV
+                IV %
               </label>
               <input
                 type="number"
@@ -1137,18 +1201,19 @@ const StrategyLeg = ({ leg, index, onUpdate, onRemove, expirations }) => {
                 }}
               />
             </div>
-          </>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
 
-const MetricRow = ({ label, value, positive, negative }) => (
+// Metric Row Component
+const MetricRow = ({ label, value, positive, negative, small }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
     <div style={{ fontSize: '0.875rem', color: '#94a3b8' }}>{label}</div>
     <div style={{ 
-      fontSize: '1rem', 
+      fontSize: small ? '0.75rem' : '1rem',
       fontWeight: 'bold',
       color: positive ? '#10b981' : negative ? '#ef4444' : '#cbd5e1'
     }}>
@@ -1157,6 +1222,7 @@ const MetricRow = ({ label, value, positive, negative }) => (
   </div>
 );
 
+// Greek Row Component
 const GreekRow = ({ label, value, description, color }) => (
   <div>
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
@@ -1167,18 +1233,17 @@ const GreekRow = ({ label, value, description, color }) => (
   </div>
 );
 
-// Inline Stock Search Component
+// Stock Search Component
 const StockSearchInline = ({ currentSymbol, onSelectStock }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const searchRef = React.useRef(null);
+  const searchRef = useRef(null);
 
   const API_URL = process.env.REACT_APP_API_URL || 'https://financial-analyst-backend-production-7175.up.railway.app/api';
 
-  // Close dropdown when clicking outside
-  React.useEffect(() => {
+  useEffect(() => {
     const handleClickOutside = (event) => {
       if (searchRef.current && !searchRef.current.contains(event.target)) {
         setIsOpen(false);
@@ -1189,8 +1254,7 @@ const StockSearchInline = ({ currentSymbol, onSelectStock }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Search with debounce
-  React.useEffect(() => {
+  useEffect(() => {
     if (query.length < 1) {
       setResults([]);
       setIsOpen(false);
@@ -1304,6 +1368,570 @@ const StockSearchInline = ({ currentSymbol, onSelectStock }) => {
           ))}
         </div>
       )}
+    </div>
+  );
+};
+
+// Help Modal Component
+const HelpModal = ({ onClose, isMobile }) => {
+  const [activeSection, setActiveSection] = useState('overview');
+
+  const sections = {
+    overview: {
+      title: '📊 Overview',
+      content: (
+        <>
+          <p style={{ marginBottom: '1rem', lineHeight: '1.6' }}>
+            Build, analyze, and save complex options strategies with multiple legs.
+          </p>
+          <h4 style={{ fontSize: '1rem', marginBottom: '0.5rem', color: '#8b5cf6' }}>Key Features:</h4>
+          <ul style={{ marginLeft: '1.5rem', lineHeight: '1.8' }}>
+            <li>Build unlimited multi-leg strategies</li>
+            <li>12 pre-built strategy templates</li>
+            <li>Visual profit/loss diagrams</li>
+            <li>Real-time Greeks calculations</li>
+            <li>Risk metrics analysis</li>
+            <li>Save and load strategies</li>
+            <li>AI Strategy Assistant</li>
+          </ul>
+        </>
+      )
+    },
+    quickstart: {
+      title: '🚀 Quick Start',
+      content: (
+        <>
+          <div style={{ marginBottom: '1rem' }}>
+            <p style={{ fontWeight: '600', marginBottom: '0.5rem' }}>1. Select a Stock</p>
+            <p style={{ fontSize: '0.875rem', color: '#94a3b8', marginBottom: '1rem' }}>
+              Use the search field to find a stock (e.g., AAPL, TSLA, SPY).
+            </p>
+
+            <p style={{ fontWeight: '600', marginBottom: '0.5rem' }}>2. Choose a Strategy</p>
+            <p style={{ fontSize: '0.875rem', color: '#94a3b8', marginBottom: '1rem' }}>
+              Click a template button or "Add Leg" to build custom.
+            </p>
+
+            <p style={{ fontWeight: '600', marginBottom: '0.5rem' }}>3. Analyze & Save</p>
+            <p style={{ fontSize: '0.875rem', color: '#94a3b8' }}>
+              View P/L diagram, adjust strikes, save your strategy!
+            </p>
+          </div>
+        </>
+      )
+    },
+    templates: {
+      title: '⚡ Strategy Templates',
+      content: (
+        <>
+          <div style={{ display: 'grid', gap: '0.75rem' }}>
+            <TemplateCard name="Bull Call Spread" desc="Bullish, limited risk" />
+            <TemplateCard name="Bear Put Spread" desc="Bearish, limited risk" />
+            <TemplateCard name="Long Straddle" desc="Big moves, either direction" />
+            <TemplateCard name="Iron Condor" desc="Range-bound, premium collection" />
+            <TemplateCard name="Covered Call" desc="Generate income on holdings" />
+            <TemplateCard name="Protective Put" desc="Protect stock position" />
+          </div>
+        </>
+      )
+    },
+    chart: {
+      title: '📈 P/L Diagram',
+      content: (
+        <>
+          <div style={{ display: 'grid', gap: '0.75rem', marginBottom: '1rem' }}>
+            <div style={{ padding: '0.75rem', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '0.5rem', borderLeft: '3px solid #60a5fa' }}>
+              <strong style={{ color: '#60a5fa' }}>Blue Line:</strong> Current stock price
+            </div>
+            <div style={{ padding: '0.75rem', background: 'rgba(251, 191, 36, 0.1)', borderRadius: '0.5rem', borderLeft: '3px solid #f59e0b' }}>
+              <strong style={{ color: '#f59e0b' }}>Orange Lines:</strong> Breakeven points
+            </div>
+            <div style={{ padding: '0.75rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '0.5rem', borderLeft: '3px solid #10b981' }}>
+              <strong style={{ color: '#10b981' }}>Above Zero:</strong> Profit zone
+            </div>
+            <div style={{ padding: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '0.5rem', borderLeft: '3px solid #ef4444' }}>
+              <strong style={{ color: '#ef4444' }}>Below Zero:</strong> Loss zone
+            </div>
+          </div>
+          <p style={{ fontSize: '0.875rem', color: '#94a3b8' }}>
+            💡 Tap/hover chart to see P/L at any price!
+          </p>
+        </>
+      )
+    },
+    greeks: {
+      title: '🔢 Greeks',
+      content: (
+        <>
+          <div style={{ display: 'grid', gap: '0.75rem' }}>
+            <GreekCard name="Delta" desc="Price sensitivity. +0.50 = gain $50 per $1 stock move" color="#60a5fa" />
+            <GreekCard name="Gamma" desc="Delta acceleration. How fast delta changes" color="#10b981" />
+            <GreekCard name="Theta" desc="Time decay. Value lost per day" color="#ef4444" />
+            <GreekCard name="Vega" desc="Volatility sensitivity. Impact of IV changes" color="#8b5cf6" />
+          </div>
+        </>
+      )
+    },
+    ai: {
+      title: '🤖 AI Assistant',
+      content: (
+        <>
+          <p style={{ marginBottom: '1rem', lineHeight: '1.6' }}>
+            Click the AI button to get personalized help with your strategy!
+          </p>
+          <h4 style={{ fontSize: '1rem', marginBottom: '0.5rem', color: '#8b5cf6' }}>The AI can:</h4>
+          <ul style={{ marginLeft: '1.5rem', lineHeight: '1.8' }}>
+            <li>Analyze your current strategy</li>
+            <li>Suggest improvements</li>
+            <li>Explain options concepts</li>
+            <li>Answer specific questions</li>
+            <li>Compare different approaches</li>
+          </ul>
+          <p style={{ fontSize: '0.875rem', color: '#94a3b8', marginTop: '1rem' }}>
+            💡 Try asking: "What's my risk?" or "How can I improve this?"
+          </p>
+        </>
+      )
+    },
+    tips: {
+      title: '💡 Pro Tips',
+      content: (
+        <>
+          <div style={{ display: 'grid', gap: '0.75rem' }}>
+            <TipCard tip="Start with templates to learn how strategies work" />
+            <TipCard tip="Always check max loss before trading" />
+            <TipCard tip="Watch theta - negative means you lose daily" />
+            <TipCard tip="Compare strategies by saving and loading" />
+            <TipCard tip="Use AI assistant for personalized advice" />
+            <TipCard tip="On mobile: Tap leg headers to expand/collapse" />
+          </div>
+        </>
+      )
+    }
+  };
+
+  return (
+    <div 
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.85)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 99999,
+        padding: '1rem',
+        overflow: 'auto'
+      }}>
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
+          borderRadius: '1rem',
+          width: '100%',
+          maxWidth: isMobile ? '100%' : '800px',
+          maxHeight: '90vh',
+          border: '1px solid #475569',
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          overflow: 'hidden'
+        }}>
+        
+        {/* Sidebar */}
+        <div style={{
+          width: isMobile ? '100%' : '240px',
+          background: 'rgba(15, 23, 42, 0.5)',
+          borderRight: isMobile ? 'none' : '1px solid #475569',
+          borderBottom: isMobile ? '1px solid #475569' : 'none',
+          padding: '1.5rem',
+          overflowY: 'auto',
+          maxHeight: isMobile ? '150px' : 'none'
+        }}>
+          <h3 style={{ fontSize: '1.125rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <HelpCircle size={18} color="#8b5cf6" />
+            Guide
+          </h3>
+          <div style={{ display: isMobile ? 'flex' : 'block', gap: isMobile ? '0.5rem' : '0', overflowX: isMobile ? 'auto' : 'visible' }}>
+            {Object.entries(sections).map(([key, section]) => (
+              <button
+                key={key}
+                onClick={() => setActiveSection(key)}
+                style={{
+                  width: isMobile ? 'auto' : '100%',
+                  padding: '0.75rem',
+                  marginBottom: isMobile ? '0' : '0.5rem',
+                  background: activeSection === key ? 'rgba(139, 92, 246, 0.2)' : 'transparent',
+                  border: activeSection === key ? '1px solid rgba(139, 92, 246, 0.3)' : '1px solid transparent',
+                  borderRadius: '0.5rem',
+                  color: activeSection === key ? '#c4b5fd' : '#94a3b8',
+                  cursor: 'pointer',
+                  fontSize: '0.8rem',
+                  fontWeight: '600',
+                  textAlign: 'left',
+                  whiteSpace: isMobile ? 'nowrap' : 'normal',
+                  transition: 'all 0.2s'
+                }}
+              >
+                {section.title}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Content */}
+        <div style={{
+          flex: 1,
+          padding: isMobile ? '1.5rem' : '2rem',
+          overflowY: 'auto',
+          position: 'relative'
+        }}>
+          <button
+            onClick={onClose}
+            style={{
+              position: 'absolute',
+              top: '1rem',
+              right: '1rem',
+              background: 'rgba(148, 163, 184, 0.1)',
+              border: 'none',
+              color: '#94a3b8',
+              cursor: 'pointer',
+              padding: '0.5rem',
+              borderRadius: '0.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1
+            }}
+          >
+            <X size={20} />
+          </button>
+
+          <h2 style={{ fontSize: isMobile ? '1.25rem' : '1.5rem', marginBottom: '1rem', color: '#cbd5e1', paddingRight: '2rem' }}>
+            {sections[activeSection].title}
+          </h2>
+          <div style={{ color: '#cbd5e1', fontSize: '0.875rem' }}>
+            {sections[activeSection].content}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const TemplateCard = ({ name, desc }) => (
+  <div style={{ padding: '0.75rem', background: 'rgba(51, 65, 85, 0.5)', borderRadius: '0.5rem', border: '1px solid #475569' }}>
+    <div style={{ fontWeight: '600', color: '#8b5cf6', marginBottom: '0.25rem' }}>{name}</div>
+    <div style={{ fontSize: '0.875rem', color: '#94a3b8' }}>{desc}</div>
+  </div>
+);
+
+const GreekCard = ({ name, desc, color }) => (
+  <div style={{ padding: '0.75rem', background: 'rgba(51, 65, 85, 0.5)', borderRadius: '0.5rem', border: `1px solid ${color}40` }}>
+    <strong style={{ color }}>{name}:</strong> <span style={{ fontSize: '0.875rem', color: '#94a3b8' }}>{desc}</span>
+  </div>
+);
+
+const TipCard = ({ tip }) => (
+  <div style={{ padding: '0.75rem', background: 'rgba(139, 92, 246, 0.05)', border: '1px solid rgba(139, 92, 246, 0.2)', borderRadius: '0.5rem' }}>
+    <span style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>• {tip}</span>
+  </div>
+);
+
+// AI Strategy Assistant Component
+const AIStrategyAssistant = ({ currentSymbol, legs, metrics, greeks, onClose, isMobile }) => {
+  const [messages, setMessages] = useState([
+    {
+      role: 'assistant',
+      content: `Hi! I'm your AI Strategy Assistant. I can help you analyze strategies, suggest improvements, and explain concepts.\n\n${currentSymbol ? `You're building a strategy for ${currentSymbol}.` : 'Select a stock to get started!'}`
+    }
+  ]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const quickPrompts = [
+    "Analyze my strategy",
+    "What's my risk?",
+    "How to improve?",
+    "Explain Greeks",
+    "What if stock moves 10%?"
+  ];
+
+  const sendMessage = async () => {
+    if (!input.trim() || loading) return;
+
+    const userMessage = { role: 'user', content: input };
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setLoading(true);
+
+    try {
+      const context = {
+        symbol: currentSymbol,
+        legs: legs,
+        metrics: metrics,
+        greeks: greeks,
+        strategyType: legs.length > 0 ? `${legs.length}-leg strategy` : 'No strategy yet'
+      };
+
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://financial-analyst-backend-production-7175.up.railway.app/api'}/ai/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [...messages, userMessage],
+          context: {
+            type: 'options_strategy',
+            data: context
+          }
+        })
+      });
+
+      const data = await response.json();
+      
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: data.message || "I'm here to help! Ask me about your options strategy.",
+        demo: data.demo
+      }]);
+    } catch (error) {
+      console.error('AI error:', error);
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: 'Sorry, I encountered an error. Please try again.',
+        error: true
+      }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{
+      position: 'fixed',
+      bottom: isMobile ? '1rem' : '2rem',
+      right: isMobile ? '1rem' : '2rem',
+      left: isMobile ? '1rem' : 'auto',
+      width: isMobile ? 'auto' : '400px',
+      height: isMobile ? 'calc(100vh - 2rem)' : '600px',
+      maxHeight: '80vh',
+      background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+      border: '1px solid #475569',
+      borderRadius: '1rem',
+      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)',
+      display: 'flex',
+      flexDirection: 'column',
+      zIndex: 10000
+    }}>
+      {/* Header */}
+      <div style={{
+        background: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)',
+        padding: isMobile ? '0.875rem' : '1rem',
+        borderRadius: '1rem 1rem 0 0',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Sparkles size={18} color="white" />
+          <div>
+            <h3 style={{ margin: 0, fontSize: '0.875rem', fontWeight: 'bold' }}>
+              AI Assistant
+            </h3>
+            <p style={{ margin: 0, fontSize: '0.7rem', opacity: 0.9 }}>
+              Strategy Help
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={onClose}
+          style={{
+            background: 'rgba(255, 255, 255, 0.2)',
+            border: 'none',
+            borderRadius: '0.5rem',
+            padding: '0.5rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center'
+          }}
+        >
+          <X size={16} color="white" />
+        </button>
+      </div>
+
+      {/* Messages */}
+      <div style={{
+        flex: 1,
+        overflowY: 'auto',
+        padding: isMobile ? '0.875rem' : '1rem',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.875rem'
+      }}>
+        {messages.length === 1 && (
+          <div style={{ marginBottom: '0.5rem' }}>
+            <p style={{ color: '#94a3b8', fontSize: '0.75rem', marginBottom: '0.75rem' }}>
+              Quick prompts:
+            </p>
+            <div style={{ display: 'grid', gap: '0.5rem' }}>
+              {quickPrompts.map((prompt, i) => (
+                <button
+                  key={i}
+                  onClick={() => setInput(prompt)}
+                  style={{
+                    padding: '0.5rem',
+                    background: 'rgba(139, 92, 246, 0.1)',
+                    border: '1px solid rgba(139, 92, 246, 0.3)',
+                    borderRadius: '0.5rem',
+                    color: '#c4b5fd',
+                    fontSize: '0.7rem',
+                    cursor: 'pointer',
+                    textAlign: 'left'
+                  }}
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {messages.map((msg, i) => (
+          <div
+            key={i}
+            style={{
+              display: 'flex',
+              gap: '0.5rem',
+              alignItems: 'flex-start',
+              flexDirection: msg.role === 'user' ? 'row-reverse' : 'row'
+            }}
+          >
+            <div style={{
+              width: '26px',
+              height: '26px',
+              borderRadius: '50%',
+              background: msg.role === 'user' ? '#3b82f6' : '#8b5cf6',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              fontSize: '0.7rem'
+            }}>
+              {msg.role === 'user' ? '👤' : '🤖'}
+            </div>
+            <div style={{
+              flex: 1,
+              padding: '0.625rem',
+              background: msg.role === 'user' 
+                ? 'rgba(59, 130, 246, 0.2)' 
+                : msg.error 
+                ? 'rgba(239, 68, 68, 0.2)'
+                : 'rgba(51, 65, 85, 0.5)',
+              border: `1px solid ${msg.role === 'user' ? '#3b82f6' : msg.error ? '#ef4444' : '#475569'}`,
+              borderRadius: '0.75rem',
+              fontSize: '0.8rem',
+              lineHeight: '1.5',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word'
+            }}>
+              {msg.content}
+              {msg.demo && (
+                <div style={{
+                  marginTop: '0.5rem',
+                  padding: '0.5rem',
+                  background: 'rgba(251, 191, 36, 0.1)',
+                  border: '1px solid rgba(251, 191, 36, 0.3)',
+                  borderRadius: '0.5rem',
+                  fontSize: '0.7rem',
+                  color: '#fbbf24'
+                }}>
+                  ⚠️ Demo - Add API key
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+
+        {loading && (
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
+            <div style={{
+              width: '26px',
+              height: '26px',
+              borderRadius: '50%',
+              background: '#8b5cf6',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.7rem'
+            }}>
+              🤖
+            </div>
+            <div style={{
+              padding: '0.625rem',
+              background: 'rgba(51, 65, 85, 0.5)',
+              border: '1px solid #475569',
+              borderRadius: '0.75rem'
+            }}>
+              <Loader size={14} className="spin" color="#8b5cf6" />
+            </div>
+          </div>
+        )}
+
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Input */}
+      <div style={{
+        padding: isMobile ? '0.875rem' : '1rem',
+        borderTop: '1px solid #475569'
+      }}>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+            placeholder="Ask about your strategy..."
+            disabled={loading}
+            style={{
+              flex: 1,
+              padding: isMobile ? '0.625rem' : '0.75rem',
+              background: '#0f172a',
+              border: '1px solid #475569',
+              borderRadius: '0.5rem',
+              color: 'white',
+              fontSize: '0.8rem'
+            }}
+          />
+          <button
+            onClick={sendMessage}
+            disabled={loading || !input.trim()}
+            style={{
+              padding: isMobile ? '0.625rem' : '0.75rem',
+              background: loading || !input.trim() ? '#475569' : 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)',
+              border: 'none',
+              borderRadius: '0.5rem',
+              color: 'white',
+              cursor: loading || !input.trim() ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center'
+            }}
+          >
+            <Sparkles size={16} />
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
