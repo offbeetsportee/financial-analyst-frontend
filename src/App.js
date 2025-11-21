@@ -39,6 +39,7 @@ const [userPreferences, setUserPreferences] = useState(null);
   const [liveIndices, setLiveIndices] = useState(null);  
   const [indicesLoading, setIndicesLoading] = useState(false);  
   const [inWatchlist, setInWatchlist] = useState(false); 
+const [portfolioData, setPortfolioData] = useState(null);
 const [aiChatData, setAiChatData] = useState({
   stockData: null,
   socialSentiment: null,
@@ -211,10 +212,13 @@ useEffect(() => {
 // Add this new function
 const fetchAIChatData = async (symbol) => {
   try {
-    const [social, sector] = await Promise.all([
+    const [social, sector, portfolio] = await Promise.all([
       stockAPI.getSocialSentiment(symbol).catch(() => null),
-      stockAPI.getSectorData(symbol).catch(() => null)
+      stockAPI.getSectorData(symbol).catch(() => null),
+      fetchPortfolioForAI().catch(() => null)
     ]);
+    
+    setPortfolioData(portfolio);
     
     setAiChatData({
       stockData: stockData,
@@ -231,7 +235,70 @@ const fetchAIChatData = async (symbol) => {
 };
 
 
+const fetchPortfolioForAI = async () => {
+  if (!isAuthenticated || !user) return null;
+  
+  try {
+    const portfolios = await portfolioAPI.getPortfolios(user.id);
+    if (!portfolios || portfolios.length === 0) return null;
+    
+    // Get the first/main portfolio
+    const mainPortfolio = portfolios[0];
+    
+    // Fetch holdings with current prices
+    const holdingsWithPrices = await Promise.all(
+      mainPortfolio.holdings.map(async (holding) => {
+        try {
+          const stockData = await stockAPI.getStockData(holding.symbol);
+          return {
+            symbol: holding.symbol,
+            shares: holding.shares,
+            purchasePrice: holding.purchase_price,
+            currentPrice: stockData.currentPrice || 0,
+            currentValue: (stockData.currentPrice || 0) * holding.shares,
+            totalCost: holding.purchase_price * holding.shares,
+            gainLoss: ((stockData.currentPrice || 0) - holding.purchase_price) * holding.shares,
+            gainLossPercent: holding.purchase_price > 0 
+              ? (((stockData.currentPrice || 0) - holding.purchase_price) / holding.purchase_price) * 100 
+              : 0
+          };
+        } catch (err) {
+          console.error(`Failed to fetch price for ${holding.symbol}:`, err);
+          return {
+            symbol: holding.symbol,
+            shares: holding.shares,
+            purchasePrice: holding.purchase_price,
+            currentPrice: holding.purchase_price,
+            currentValue: holding.purchase_price * holding.shares,
+            totalCost: holding.purchase_price * holding.shares,
+            gainLoss: 0,
+            gainLossPercent: 0
+          };
+        }
+      })
+    );
 
+    const totalValue = holdingsWithPrices.reduce((sum, h) => sum + h.currentValue, 0);
+    const totalCost = holdingsWithPrices.reduce((sum, h) => sum + h.totalCost, 0);
+    const totalGain = totalValue - totalCost;
+    const totalReturn = totalCost > 0 ? (totalGain / totalCost) * 100 : 0;
+
+    return {
+      id: mainPortfolio.id,
+      name: mainPortfolio.name,
+      holdings: holdingsWithPrices,
+      totalValue: totalValue,
+      totalCost: totalCost,
+      performance: {
+        totalGain: totalGain,
+        totalReturn: totalReturn
+      }
+    };
+  } catch (err) {
+    console.error('Failed to fetch portfolio for AI:', err);
+    return null;
+  }
+};
 
   useEffect(() => {
     if (activeTab === 'market') {
@@ -239,6 +306,16 @@ const fetchAIChatData = async (symbol) => {
       if (!liveIndices) fetchLiveIndices();
     }
   }, [activeTab]);
+
+// ADD THIS NEW useEffect FOR PORTFOLIO TAB
+useEffect(() => {
+  if (activeTab === 'portfolio' && isAuthenticated) {
+    fetchPortfolioForAI().then(portfolio => {
+      setPortfolioData(portfolio);
+    });
+  }
+}, [activeTab, isAuthenticated, user]);
+
 
   const getDemoStockData = (symbol) => {
     return {
@@ -835,6 +912,21 @@ const fetchAIChatData = async (symbol) => {
         {activeTab === 'portfolio' && (
           <div>
             <Portfolio user={user} />
+  {/* ADD AI CHAT IN PORTFOLIO TAB TOO */}
+    {isAuthenticated && (
+      <AIChat
+        symbol={null}
+        portfolio={portfolioData}
+        stockData={null}
+        socialSentiment={null}
+        sectorAnalysis={null}
+        marketConditions={{
+          fedIndicators: fredData,
+          indices: liveIndices
+        }}
+      />
+    )}
+
           </div>
         )}
 
@@ -869,17 +961,16 @@ const fetchAIChatData = async (symbol) => {
       {showAuth && <Auth onClose={() => setShowAuth(false)} />}
 
  {/* AI Chat Assistant - ADD THIS */}
-      {isAuthenticated && activeTab === 'company' && (
-        <AIChat
-          symbol={selectedStock}
-          portfolio={null} // We'll add portfolio integration later
-          stockData={aiChatData.stockData || stockData}
-          socialSentiment={aiChatData.socialSentiment}
-          sectorAnalysis={aiChatData.sectorAnalysis}
-          marketConditions={aiChatData.marketConditions}
-        />
-      )}
-
+    {isAuthenticated && activeTab === 'company' && (
+  <AIChat
+    symbol={selectedStock}
+    portfolio={portfolioData}  // CHANGE FROM null TO portfolioData
+    stockData={aiChatData.stockData || stockData}
+    socialSentiment={aiChatData.socialSentiment}
+    sectorAnalysis={aiChatData.sectorAnalysis}
+    marketConditions={aiChatData.marketConditions}
+  />
+)}
 
       <footer style={{ 
         background: 'rgba(15, 23, 42, 0.95)', 
