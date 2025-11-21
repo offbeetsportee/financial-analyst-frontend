@@ -17,6 +17,7 @@ import StockNews from './components/StockNews';
 import TechnicalIndicators from './components/TechnicalIndicators';
 import SectorAnalysis from './components/SectorAnalysis';
 import SocialSentiment from './components/SocialSentiment';
+import AIChat from './components/AIChat';
 import './App.css';
 
 function App() {
@@ -38,6 +39,12 @@ const [userPreferences, setUserPreferences] = useState(null);
   const [liveIndices, setLiveIndices] = useState(null);  
   const [indicesLoading, setIndicesLoading] = useState(false);  
   const [inWatchlist, setInWatchlist] = useState(false); 
+const [aiChatData, setAiChatData] = useState({
+  stockData: null,
+  socialSentiment: null,
+  sectorAnalysis: null,
+  marketConditions: null
+});
 
   useEffect(() => {
     document.title = 'InvestorIQ - Professional Financial Analysis';
@@ -190,13 +197,41 @@ useEffect(() => {
     }
   };
 
-  useEffect(() => {
-    if (activeTab === 'company') {
-      fetchStockData(selectedStock);
-      fetchPriceData(selectedStock, selectedTimeframe);
-      checkWatchlist(selectedStock);
-    }
-  }, [selectedStock, activeTab, selectedTimeframe, user]);
+useEffect(() => {
+  if (activeTab === 'company' && selectedStock) {
+    fetchStockData(selectedStock);
+    fetchPriceData(selectedStock, selectedTimeframe);
+    checkWatchlist(selectedStock);
+    
+    // Fetch AI context data
+    fetchAIChatData(selectedStock);
+  }
+}, [selectedStock, activeTab, selectedTimeframe, user]);
+
+// Add this new function
+const fetchAIChatData = async (symbol) => {
+  try {
+    const [social, sector] = await Promise.all([
+      stockAPI.getSocialSentiment(symbol).catch(() => null),
+      stockAPI.getSectorData(symbol).catch(() => null)
+    ]);
+    
+    setAiChatData({
+      stockData: stockData,
+      socialSentiment: social,
+      sectorAnalysis: sector,
+      marketConditions: {
+        fedIndicators: fredData,
+        indices: liveIndices
+      }
+    });
+  } catch (err) {
+    console.error('Failed to fetch AI context:', err);
+  }
+};
+
+
+
 
   useEffect(() => {
     if (activeTab === 'market') {
@@ -832,6 +867,19 @@ useEffect(() => {
 </div>
 
       {showAuth && <Auth onClose={() => setShowAuth(false)} />}
+
+ {/* AI Chat Assistant - ADD THIS */}
+      {isAuthenticated && activeTab === 'company' && (
+        <AIChat
+          symbol={selectedStock}
+          portfolio={null} // We'll add portfolio integration later
+          stockData={aiChatData.stockData || stockData}
+          socialSentiment={aiChatData.socialSentiment}
+          sectorAnalysis={aiChatData.sectorAnalysis}
+          marketConditions={aiChatData.marketConditions}
+        />
+      )}
+
 
       <footer style={{ 
         background: 'rgba(15, 23, 42, 0.95)', 
