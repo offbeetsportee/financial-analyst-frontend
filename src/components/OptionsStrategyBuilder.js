@@ -746,7 +746,8 @@ const OptionsStrategyBuilder = ({ symbol: initialSymbol, underlyingPrice: initia
               border: '1px solid #334155',
               borderRadius: '0.5rem',
               color: 'white',
-              fontSize: '0.875rem'
+              fontSize: '0.875rem',
+              boxSizing: 'border-box'
             }}
           />
         </div>
@@ -1310,21 +1311,11 @@ const StockSearchInline = ({ currentSymbol, onSelectStock }) => {
             border: 'none',
             outline: 'none',
             color: 'white',
-            fontSize: '0.875rem'
+            fontSize: '0.875rem',
+            position: 'relative',
+            zIndex: 2
           }}
         />
-        {currentSymbol && !query && (
-          <span style={{ 
-            fontSize: '0.875rem', 
-            color: '#8b5cf6', 
-            fontWeight: '600',
-            position: 'absolute',
-            left: '0.75rem',
-            pointerEvents: 'none'
-          }}>
-            {currentSymbol}
-          </span>
-        )}
         {loading && <Loader size={16} className="spin" color="#60a5fa" />}
       </div>
 
