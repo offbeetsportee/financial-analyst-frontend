@@ -33,30 +33,37 @@ useEffect(() => {
 }, [portfolio]);
 
   const buildContext = () => {
-    return {
-      portfolio: portfolio ? {
-        holdings: portfolio.holdings,
-        totalValue: portfolio.totalValue,
-        performance: portfolio.performance
-      } : null,
-      currentStock: stockData ? {
-        symbol: stockData.Symbol,
-        name: stockData.Name,
-        price: stockData.CurrentPrice,
-        sector: stockData.sector,
-        industry: stockData.industry,
-        fundamentals: {
-          peRatio: stockData.PERatio,
-          marketCap: stockData.MarketCapitalization,
-          roe: stockData.ReturnOnEquityTTM,
-          debtToEquity: stockData.DebtToEquity
-        }
-      } : null,
-      socialSentiment: socialSentiment,
-      sectorAnalysis: sectorAnalysis,
-      marketConditions: marketConditions
-    };
+  console.log('🤖 Building AI context...');
+  console.log('Portfolio prop:', portfolio);
+  console.log('Stock data:', stockData);
+  
+  const context = {
+    portfolio: portfolio ? {
+      holdings: portfolio.holdings,
+      totalValue: portfolio.totalValue,
+      performance: portfolio.performance
+    } : null,
+    currentStock: stockData ? {
+      symbol: stockData.Symbol,
+      name: stockData.Name,
+      price: stockData.CurrentPrice,
+      sector: stockData.sector,
+      industry: stockData.industry,
+      fundamentals: {
+        peRatio: stockData.PERatio,
+        marketCap: stockData.MarketCapitalization,
+        roe: stockData.ReturnOnEquityTTM,
+        debtToEquity: stockData.DebtToEquity
+      }
+    } : null,
+    socialSentiment: socialSentiment,
+    sectorAnalysis: sectorAnalysis,
+    marketConditions: marketConditions
   };
+  
+  console.log('📊 Final context being sent to AI:', context);
+  return context;
+};
 
   const sendMessage = async () => {
     if (!input.trim() || loading) return;
