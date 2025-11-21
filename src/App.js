@@ -309,12 +309,16 @@ const fetchPortfolioForAI = async () => {
 
 // ADD THIS NEW useEffect FOR PORTFOLIO TAB
 useEffect(() => {
-  if (activeTab === 'portfolio' && isAuthenticated) {
+  if (activeTab === 'portfolio' && isAuthenticated && user) {
+    console.log('Fetching portfolio for AI...');
     fetchPortfolioForAI().then(portfolio => {
+      console.log('Portfolio fetched:', portfolio);
       setPortfolioData(portfolio);
+    }).catch(err => {
+      console.error('Portfolio fetch failed:', err);
     });
   }
-}, [activeTab, isAuthenticated, user]);
+}, [activeTab, isAuthenticated, user?.id]);  // Add user?.id to dependencies
 
 
   const getDemoStockData = (symbol) => {
@@ -925,6 +929,21 @@ useEffect(() => {
           indices: liveIndices
         }}
       />
+    )}
+
+{/* Loading message if portfolio not fetched yet */}
+    {isAuthenticated && !portfolioData && (
+      <div style={{
+        position: 'fixed',
+        bottom: '2rem',
+        right: '2rem',
+        padding: '1rem',
+        background: 'rgba(59, 130, 246, 0.9)',
+        borderRadius: '0.5rem',
+        fontSize: '0.875rem'
+      }}>
+        Loading AI advisor...
+      </div>
     )}
 
           </div>

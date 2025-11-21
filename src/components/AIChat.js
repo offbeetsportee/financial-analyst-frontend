@@ -23,6 +23,15 @@ const AIChat = ({
     scrollToBottom();
   }, [messages]);
 
+useEffect(() => {
+  // If we're supposed to have portfolio but don't, log it
+  if (portfolio) {
+    console.log('AI has portfolio data:', portfolio);
+  } else {
+    console.log('AI does NOT have portfolio data');
+  }
+}, [portfolio]);
+
   const buildContext = () => {
     return {
       portfolio: portfolio ? {
