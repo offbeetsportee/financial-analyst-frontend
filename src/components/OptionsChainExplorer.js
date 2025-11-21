@@ -369,7 +369,12 @@ const OptionsChainExplorer = ({ symbol: initialSymbol, underlyingPrice: initialP
         </div>
 
         {/* Stock Search Bar */}
-        <div style={{ position: 'relative', marginBottom: '1.5rem', maxWidth: '500px' }}>
+        <div style={{ 
+          position: 'relative', 
+          marginBottom: '1.5rem', 
+          maxWidth: '100%',
+          width: '100%'
+        }}>
           <StockSearchInput
             searchQuery={searchQuery}
             handleSearchChange={handleSearchChange}
@@ -570,7 +575,7 @@ const OptionsChainExplorer = ({ symbol: initialSymbol, underlyingPrice: initialP
 
 // Stock Search Input Component
 const StockSearchInput = ({ searchQuery, handleSearchChange, searchResults, showSearchResults, selectStock, setShowSearchResults }) => (
-  <div style={{ position: 'relative' }}>
+  <div style={{ position: 'relative', width: '100%' }}>
     <div style={{ position: 'relative' }}>
       <Search 
         size={20} 
@@ -579,7 +584,8 @@ const StockSearchInput = ({ searchQuery, handleSearchChange, searchResults, show
           left: '1rem', 
           top: '50%', 
           transform: 'translateY(-50%)',
-          color: '#94a3b8'
+          color: '#94a3b8',
+          pointerEvents: 'none'
         }} 
       />
       <input
@@ -595,7 +601,8 @@ const StockSearchInput = ({ searchQuery, handleSearchChange, searchResults, show
           borderRadius: '0.5rem',
           color: 'white',
           fontSize: '1rem',
-          outline: 'none'
+          outline: 'none',
+          boxSizing: 'border-box'
         }}
         onFocus={() => searchResults.length > 0 && setShowSearchResults(true)}
       />
