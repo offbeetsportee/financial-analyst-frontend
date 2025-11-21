@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   TrendingUp, TrendingDown, Filter, AlertCircle, 
   Calendar, DollarSign, Activity, Zap, RefreshCw, Loader,
-  ChevronDown, ChevronUp, Info
+  ChevronDown, ChevronUp, Info, BarChart3
 } from 'lucide-react';
 import MobileTable from './MobileTable';
 
