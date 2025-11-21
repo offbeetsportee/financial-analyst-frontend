@@ -1035,7 +1035,7 @@ const StrategyLeg = ({ leg, index, onUpdate, onRemove, expirations, isMobile }) 
       {(!isMobile || isExpanded) && (
         <div style={{ 
           display: 'grid', 
-          gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fit, minmax(100px, 1fr))',
+          gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fit, minmax(100px, 1fr))',
           gap: isMobile ? '0.5rem' : '0.75rem' 
         }}>
           {/* Type */}
@@ -1053,7 +1053,8 @@ const StrategyLeg = ({ leg, index, onUpdate, onRemove, expirations, isMobile }) 
                 border: '1px solid #475569',
                 borderRadius: '0.375rem',
                 color: 'white',
-                fontSize: isMobile ? '0.7rem' : '0.75rem'
+                fontSize: isMobile ? '0.7rem' : '0.75rem',
+                boxSizing: 'border-box'
               }}
             >
               <option value="call">Call</option>
@@ -1078,7 +1079,8 @@ const StrategyLeg = ({ leg, index, onUpdate, onRemove, expirations, isMobile }) 
                 borderRadius: '0.375rem',
                 color: leg.position === 'long' ? '#10b981' : '#ef4444',
                 fontSize: isMobile ? '0.7rem' : '0.75rem',
-                fontWeight: '600'
+                fontWeight: '600',
+                boxSizing: 'border-box'
               }}
             >
               <option value="long">Long</option>
@@ -1104,7 +1106,8 @@ const StrategyLeg = ({ leg, index, onUpdate, onRemove, expirations, isMobile }) 
                   border: '1px solid #475569',
                   borderRadius: '0.375rem',
                   color: 'white',
-                  fontSize: isMobile ? '0.7rem' : '0.75rem'
+                  fontSize: isMobile ? '0.7rem' : '0.75rem',
+                  boxSizing: 'border-box'
                 }}
               />
             </div>
@@ -1127,14 +1130,15 @@ const StrategyLeg = ({ leg, index, onUpdate, onRemove, expirations, isMobile }) 
                 border: '1px solid #475569',
                 borderRadius: '0.375rem',
                 color: 'white',
-                fontSize: isMobile ? '0.7rem' : '0.75rem'
+                fontSize: isMobile ? '0.7rem' : '0.75rem',
+                boxSizing: 'border-box'
               }}
             />
           </div>
 
           {/* Premium */}
           {leg.type !== 'stock' && (
-            <div>
+            <div style={{ gridColumn: isMobile ? 'span 2' : 'auto' }}>
               <label style={{ display: 'block', fontSize: '0.7rem', color: '#94a3b8', marginBottom: '0.25rem' }}>
                 Premium
               </label>
@@ -1150,7 +1154,8 @@ const StrategyLeg = ({ leg, index, onUpdate, onRemove, expirations, isMobile }) 
                   border: '1px solid #475569',
                   borderRadius: '0.375rem',
                   color: 'white',
-                  fontSize: isMobile ? '0.7rem' : '0.75rem'
+                  fontSize: isMobile ? '0.7rem' : '0.75rem',
+                  boxSizing: 'border-box'
                 }}
               />
             </div>
@@ -1174,7 +1179,8 @@ const StrategyLeg = ({ leg, index, onUpdate, onRemove, expirations, isMobile }) 
                   border: '1px solid #475569',
                   borderRadius: '0.375rem',
                   color: '#60a5fa',
-                  fontSize: '0.75rem'
+                  fontSize: '0.75rem',
+                  boxSizing: 'border-box'
                 }}
               />
             </div>
@@ -1198,7 +1204,8 @@ const StrategyLeg = ({ leg, index, onUpdate, onRemove, expirations, isMobile }) 
                   border: '1px solid #475569',
                   borderRadius: '0.375rem',
                   color: '#8b5cf6',
-                  fontSize: '0.75rem'
+                  fontSize: '0.75rem',
+                  boxSizing: 'border-box'
                 }}
               />
             </div>
