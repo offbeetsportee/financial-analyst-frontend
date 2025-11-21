@@ -235,58 +235,62 @@ const fetchAIChatData = async (symbol) => {
 };
 
 
+
 const fetchPortfolioForAI = async () => {
-  if (!isAuthenticated || !user) return null;
+  console.log('🔍 fetchPortfolioForAI called');
+  
+  if (!isAuthenticated || !user) {
+    console.log('❌ Not authenticated');
+    return null;
+  }
   
   try {
+    console.log('📡 Fetching portfolios for user:', user.id);
     const portfolios = await portfolioAPI.getPortfolios(user.id);
-    if (!portfolios || portfolios.length === 0) return null;
+    console.log('📊 Raw portfolios response:', portfolios);
     
-    // Get the first/main portfolio
-    const mainPortfolio = portfolios[0];
+    if (!portfolios) {
+      console.log('❌ Portfolios is null/undefined');
+      return null;
+    }
     
-    // Fetch holdings with current prices
-    const holdingsWithPrices = await Promise.all(
-      mainPortfolio.holdings.map(async (holding) => {
-        try {
-          const stockData = await stockAPI.getStockData(holding.symbol);
-          return {
-            symbol: holding.symbol,
-            shares: holding.shares,
-            purchasePrice: holding.purchase_price,
-            currentPrice: stockData.currentPrice || 0,
-            currentValue: (stockData.currentPrice || 0) * holding.shares,
-            totalCost: holding.purchase_price * holding.shares,
-            gainLoss: ((stockData.currentPrice || 0) - holding.purchase_price) * holding.shares,
-            gainLossPercent: holding.purchase_price > 0 
-              ? (((stockData.currentPrice || 0) - holding.purchase_price) / holding.purchase_price) * 100 
-              : 0
-          };
-        } catch (err) {
-          console.error(`Failed to fetch price for ${holding.symbol}:`, err);
-          return {
-            symbol: holding.symbol,
-            shares: holding.shares,
-            purchasePrice: holding.purchase_price,
-            currentPrice: holding.purchase_price,
-            currentValue: holding.purchase_price * holding.shares,
-            totalCost: holding.purchase_price * holding.shares,
-            gainLoss: 0,
-            gainLossPercent: 0
-          };
-        }
-      })
-    );
+    const portfolioArray = Array.isArray(portfolios) ? portfolios : (portfolios.portfolios || portfolios.data || []);
+    console.log('📂 Portfolio array:', portfolioArray);
+    
+    if (portfolioArray.length === 0) {
+      console.log('❌ No portfolios found');
+      return null;
+    }
+    
+    const mainPortfolio = portfolioArray[0];
+    console.log('✅ Main portfolio:', mainPortfolio);
+    
+    if (!mainPortfolio.holdings || !Array.isArray(mainPortfolio.holdings)) {
+      console.log('❌ No holdings array found');
+      console.log('Available keys:', Object.keys(mainPortfolio));
+      return null;
+    }
+    
+    console.log(`✅ Found ${mainPortfolio.holdings.length} holdings`);
+    
+    const holdings = mainPortfolio.holdings.map(holding => ({
+      symbol: holding.symbol,
+      shares: holding.shares,
+      purchasePrice: holding.purchase_price || 0,
+      currentPrice: holding.current_price || holding.purchase_price || 0,
+      currentValue: (holding.current_price || holding.purchase_price || 0) * holding.shares,
+      totalCost: (holding.purchase_price || 0) * holding.shares
+    }));
 
-    const totalValue = holdingsWithPrices.reduce((sum, h) => sum + h.currentValue, 0);
-    const totalCost = holdingsWithPrices.reduce((sum, h) => sum + h.totalCost, 0);
+    const totalValue = holdings.reduce((sum, h) => sum + h.currentValue, 0);
+    const totalCost = holdings.reduce((sum, h) => sum + h.totalCost, 0);
     const totalGain = totalValue - totalCost;
     const totalReturn = totalCost > 0 ? (totalGain / totalCost) * 100 : 0;
 
     return {
       id: mainPortfolio.id,
       name: mainPortfolio.name,
-      holdings: holdingsWithPrices,
+      holdings: holdings,
       totalValue: totalValue,
       totalCost: totalCost,
       performance: {
@@ -294,11 +298,14 @@ const fetchPortfolioForAI = async () => {
         totalReturn: totalReturn
       }
     };
+    
   } catch (err) {
-    console.error('Failed to fetch portfolio for AI:', err);
+    console.error('❌ Portfolio fetch error:', err);
     return null;
   }
 };
+
+
 
   useEffect(() => {
     if (activeTab === 'market') {
