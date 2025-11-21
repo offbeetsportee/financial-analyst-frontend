@@ -333,3 +333,63 @@ export const preferencesAPI = {
     return response.json();
   }
 };
+
+// ==================== OPTIONS API ====================
+// ADD THIS ENTIRE SECTION
+
+export const optionsAPI = {
+  // Get full options chain
+  getOptionsChain: async (symbol, expiration = null) => {
+    const url = expiration 
+      ? `${API_URL}/options/${symbol}?expiration=${expiration}`
+      : `${API_URL}/options/${symbol}`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Failed to fetch options chain');
+    return response.json();
+  },
+
+  // Get available expiration dates
+  getExpirations: async (symbol) => {
+    const response = await fetch(`${API_URL}/options/${symbol}/expirations`);
+    if (!response.ok) throw new Error('Failed to fetch expirations');
+    return response.json();
+  },
+
+  // Get unusual activity
+  getUnusualActivity: async (symbol) => {
+    const response = await fetch(`${API_URL}/options/${symbol}/unusual`);
+    if (!response.ok) throw new Error('Failed to fetch unusual activity');
+    return response.json();
+  },
+
+  // Get Greeks
+  getGreeks: async (symbol, expiration = null) => {
+    const url = expiration
+      ? `${API_URL}/options/${symbol}/greeks?expiration=${expiration}`
+      : `${API_URL}/options/${symbol}/greeks`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Failed to fetch Greeks');
+    return response.json();
+  },
+
+  // Filter options
+  filterOptions: async (symbol, filters) => {
+    const response = await fetch(`${API_URL}/options/${symbol}/filter`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(filters)
+    });
+    if (!response.ok) throw new Error('Failed to filter options');
+    return response.json();
+  },
+
+  // Get specific strike
+  getStrike: async (symbol, strike, expiration = null) => {
+    const url = expiration
+      ? `${API_URL}/options/${symbol}/strike/${strike}?expiration=${expiration}`
+      : `${API_URL}/options/${symbol}/strike/${strike}`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Failed to fetch strike data');
+    return response.json();
+  }
+};

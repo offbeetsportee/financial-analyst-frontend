@@ -18,6 +18,7 @@ import TechnicalIndicators from './components/TechnicalIndicators';
 import SectorAnalysis from './components/SectorAnalysis';
 import SocialSentiment from './components/SocialSentiment';
 import AIChat from './components/AIChat';
+import OptionsChainExplorer from './components/OptionsChainExplorer';
 import './App.css';
 
 function App() {
@@ -482,7 +483,7 @@ useEffect(() => {
 
       <div style={{ maxWidth: '1200px', margin: '1rem auto', padding: '0 1rem' }}>
         <div className="tabs-container tab-scroll-container" style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid #334155', marginBottom: '2rem' }}>
-          {['market', 'company', 'compare', 'portfolio', 'watchlist', 'education', 'settings'].map(tab => (
+          {['market', 'company', 'compare', 'options','portfolio', 'watchlist', 'education', 'settings'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -907,6 +908,33 @@ useEffect(() => {
 {activeTab === 'compare' && (
   <div>
     <StockComparison />
+  </div>
+)}
+
+{activeTab === 'options' && (
+  <div>
+    {!selectedStock ? (
+      <div style={{ 
+        padding: '3rem', 
+        textAlign: 'center',
+        background: 'rgba(30, 41, 59, 0.5)',
+        borderRadius: '0.75rem',
+        border: '1px solid #334155'
+      }}>
+        <Activity size={48} color="#94a3b8" style={{ margin: '0 auto 1rem' }} />
+        <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#e2e8f0' }}>
+          Select a Stock to View Options
+        </h3>
+        <p style={{ color: '#94a3b8', margin: 0 }}>
+          Use the search bar above to find a stock with options data
+        </p>
+      </div>
+    ) : (
+      <OptionsChainExplorer 
+        symbol={selectedStock}
+        underlyingPrice={stockData?.currentPrice || stockData?.CurrentPrice || 0}
+      />
+    )}
   </div>
 )}
 
