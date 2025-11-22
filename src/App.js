@@ -22,6 +22,7 @@ import OptionsChainExplorer from './components/OptionsChainExplorer';
 import OptionsStrategyBuilder from './components/OptionsStrategyBuilder';
 import OptionsScreener from './components/OptionsScreener';
 import IVCrushPredictor from './components/IVCrushPredictor'; 
+import CompanyAnalysis from './components/CompanyAnalysis';  // ✅ FIXED PATH
 import './App.css';
 
 function App() {
@@ -691,8 +692,10 @@ useEffect(() => {
           </div>
         )}
 
+        {/* ✅ UPDATED COMPANY TAB - OPTION 1: BEST OF BOTH WORLDS */}
         {activeTab === 'company' && (
           <div>
+            {/* Stock Category Selector - KEEP THIS */}
             <div style={{ background: 'rgba(30, 41, 59, 0.5)', borderRadius: '0.5rem', padding: '1.5rem', marginBottom: '2rem', border: '1px solid #334155' }}>
               {Object.entries(stockCategories).map(([category, stocks]) => (
                 <div key={category} style={{ marginBottom: '1.5rem' }}>
@@ -722,190 +725,10 @@ useEffect(() => {
                   </div>
                 </div>
               ))}
-              
-              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid #475569' }}>
-                <button
-                  onClick={() => fetchStockData(selectedStock)}
-                  disabled={loading}
-                  style={{
-                    padding: '0.75rem 1.5rem',
-                    borderRadius: '0.375rem',
-                    border: 'none',
-                    background: loading ? '#6b7280' : '#059669',
-                    color: 'white',
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    fontWeight: '600',
-                    fontSize: '0.875rem'
-                  }}
-                >
-                  {loading ? <Loader size={16} className="spin" /> : <RefreshCw size={16} />}
-                  {loading ? 'Loading...' : 'Refresh Data'}
-                </button>
-                <div style={{ color: '#94a3b8', fontSize: '0.875rem' }}>
-                  Selected: <span style={{ color: '#60a5fa', fontWeight: '600', fontSize: '1rem' }}>{selectedStock}</span>
-                </div>
-              </div>
             </div>
 
-            {error && (
-              <div style={{ background: 'rgba(234, 179, 8, 0.1)', border: '1px solid rgba(234, 179, 8, 0.3)', borderRadius: '0.5rem', padding: '1rem', marginBottom: '1rem' }}>
-                <p style={{ margin: 0, color: '#fcd34d' }}>⚠️ {error}</p>
-              </div>
-            )}
-
-
-            {stockData && (
-              <div>
-                <div style={{ background: 'linear-gradient(to right, #2563eb, #1e40af)', borderRadius: '0.75rem', padding: '2rem', marginBottom: '2rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
-                    <h2 style={{ fontSize: '2rem', margin: 0 }}>{stockData.Name}</h2>
-                    <button
-                      onClick={toggleWatchlist}
-                      style={{
-                        padding: '0.75rem',
-                        background: inWatchlist ? 'rgba(251, 191, 36, 0.2)' : 'rgba(255, 255, 255, 0.1)',
-                        border: inWatchlist ? '1px solid #fbbf24' : '1px solid rgba(255, 255, 255, 0.2)',
-                        borderRadius: '0.5rem',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        color: 'white',
-                        fontSize: '0.875rem',
-                        fontWeight: '600'
-                      }}
-                    >
-                      <Star size={20} color={inWatchlist ? '#fbbf24' : 'white'} fill={inWatchlist ? '#fbbf24' : 'none'} />
-                      {inWatchlist ? 'In Watchlist' : 'Add to Watchlist'}
-                    </button>
-                  </div>
-                  
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', 
-                    gap: '1.5rem' 
-                  }}>
-                    <div>
-                      <div style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>Market Cap</div>
-                      <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{formatMarketCap(stockData.MarketCapitalization)}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>P/E Ratio</div>
-                      <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stockData.PERatio}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>Symbol</div>
-                      <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stockData.Symbol}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>Current Price</div>
-                      <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
-                        ${stockData.CurrentPrice ? stockData.CurrentPrice.toFixed(2) : 'N/A'}
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>52-Week High</div>
-                      <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#34d399' }}>
-                        ${stockData.High ? stockData.High.toFixed(2) : 'N/A'}
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>52-Week Low</div>
-                      <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#f87171' }}>
-                        ${stockData.Low ? stockData.Low.toFixed(2) : 'N/A'}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ marginBottom: '2rem' }}>
-                  <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-                    {['daily', 'weekly', 'monthly'].map((tf) => (
-                      <button
-                        key={tf}
-                        onClick={() => setSelectedTimeframe(tf)}
-                        style={{
-                          padding: '0.5rem 1rem',
-                          borderRadius: '0.375rem',
-                          border: selectedTimeframe === tf ? '2px solid #60a5fa' : '1px solid #475569',
-                          background: selectedTimeframe === tf ? 'rgba(96, 165, 250, 0.2)' : '#334155',
-                          color: selectedTimeframe === tf ? '#60a5fa' : '#cbd5e1',
-                          cursor: 'pointer',
-                          fontSize: '0.875rem',
-                          fontWeight: selectedTimeframe === tf ? '600' : '400',
-                          textTransform: 'capitalize'
-                        }}
-                      >
-                        {tf}
-                      </button>
-                    ))}
-                  </div>
-
-                  {priceLoading ? (
-                    <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
-                      <Loader size={48} color="#60a5fa" className="spin" />
-                    </div>
-                  
-) : priceData ? (
-                    <>
-                      <StockChart
-                        priceData={priceData.data}
-                        performance={priceData.performance}
-                        symbol={selectedStock}
-                        timeframe={selectedTimeframe}
-                      />
-                      
-                      {/* Technical Indicators - ADD THIS */}
-                      <div style={{ marginTop: '2rem' }}>
-                        <TechnicalIndicators 
-                          priceData={priceData.data} 
-                          symbol={selectedStock} 
-                        />
-                      </div>
-                    </>
-                  ) : (
-
-
-                    <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>
-                      Click a timeframe to load price data
-                    </div>
-                  )}
-                </div>
-
-                <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <DollarSign size={24} color="#fbbf24" />
-                  Key Financial Metrics
-                </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
-                  <MetricCard label="EPS (Earnings Per Share)" value={`$${stockData.EPS}`} />
-                  <MetricCard label="Revenue Per Share" value={`$${stockData.revenuePerShareTTM || 'N/A'}`} />
-                  <MetricCard label="Profit Margin" value={formatPercent(stockData.ProfitMargin || 0)} />
-                  <MetricCard label="Debt-to-Equity Ratio" value={stockData.DebtToEquity > 0 ? stockData.DebtToEquity : 'N/A'} />
-                  <MetricCard label="ROE (Return on Equity)" value={formatPercent(stockData.ReturnOnEquityTTM || 0)} />
-                  <MetricCard label="Dividend Yield" value={formatPercent(stockData.DividendYield || 0)} />
-                  <MetricCard label="Current Ratio" value={stockData.CurrentRatio > 0 ? stockData.CurrentRatio : 'N/A'} />
-                  <MetricCard label="Book Value" value={`$${stockData.BookValue || 'N/A'}`} />
-                </div>
-
-{/* ADD NEWS SECTION HERE ⬇️ */}
-                <div style={{ marginTop: '2rem' }}>
-                  <StockNews symbol={selectedStock} />
-                </div>
- {/* ADD SECTOR ANALYSIS HERE */}
-                <div style={{ marginTop: '2rem' }}>
-                  <SectorAnalysis symbol={selectedStock} />
-                </div>
-
-{/* Social Sentiment - ADD THIS */}
-<div style={{ marginTop: '2rem' }}>
-  <SocialSentiment symbol={selectedStock} />
-</div>
-
-              </div>
-            )}
+            {/* ✅ NEW: CompanyAnalysis Component - 5 Comprehensive Tabs (includes Price Chart) */}
+            <CompanyAnalysis symbol={selectedStock} />
           </div>
         )}
 
