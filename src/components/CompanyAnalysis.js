@@ -10,6 +10,7 @@ import {
 import StockNews from './StockNews';
 import SectorAnalysis from './SectorAnalysis';
 import SocialSentiment from './SocialSentiment';
+import AlphaIntelligence from './AlphaIntelligence';
 
 const CompanyAnalysis = ({ symbol: initialSymbol }) => {
   const [currentSymbol, setCurrentSymbol] = useState(initialSymbol || '');
@@ -983,9 +984,10 @@ const OverviewTab = ({ overview, symbol }) => {
         </div>
         
         {/* Stock News - MOVED TO BOTTOM */}
-        <div style={{ marginTop: '2rem' }}>
-          <StockNewsSection symbol={symbol} />
-        </div>
+        // Replace in Market Context section
+<       div style={{ marginTop: '2rem' }}>
+       <AlphaIntelligence symbol={symbol} />
+      </div>
       </div>
     </div>
   );
