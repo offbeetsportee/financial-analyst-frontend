@@ -177,6 +177,299 @@ const CompanyAnalysis = ({ symbol: initialSymbol }) => {
 
   return (
     <div style={{ width: '100%', maxWidth: '100%', overflowX: 'hidden' }}>
+      {/* Popular Stocks by Sector - Fill Empty Space */}
+      {!currentSymbol && (
+        <div style={{
+          background: 'rgba(30, 41, 59, 0.5)',
+          border: '1px solid #334155',
+          borderRadius: '0.75rem',
+          padding: '2rem',
+          marginBottom: '2rem'
+        }}>
+          <h2 style={{
+            fontSize: '1.5rem',
+            fontWeight: '700',
+            marginBottom: '2rem',
+            color: '#cbd5e1',
+            textAlign: 'center'
+          }}>
+            🔥 Popular Stocks by Sector
+          </h2>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            {/* Tech Giants */}
+            <div>
+              <h3 style={{
+                fontSize: '0.875rem',
+                fontWeight: '600',
+                color: '#60a5fa',
+                marginBottom: '1rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em'
+              }}>
+                TECH GIANTS
+              </h3>
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                {['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'NVDA', 'TSLA', 'NFLX', 'AMD', 'INTC', 'ADBE', 'CRM', 'ORCL', 'CSCO', 'AVGO'].map(sym => (
+                  <button
+                    key={sym}
+                    onClick={() => setCurrentSymbol(sym)}
+                    style={{
+                      padding: '0.5rem 1.25rem',
+                      background: 'rgba(96, 165, 250, 0.1)',
+                      border: '1px solid rgba(96, 165, 250, 0.3)',
+                      borderRadius: '0.5rem',
+                      color: '#60a5fa',
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(96, 165, 250, 0.2)';
+                      e.currentTarget.style.borderColor = '#60a5fa';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(96, 165, 250, 0.1)';
+                      e.currentTarget.style.borderColor = 'rgba(96, 165, 250, 0.3)';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                  >
+                    {sym}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Finance */}
+            <div>
+              <h3 style={{
+                fontSize: '0.875rem',
+                fontWeight: '600',
+                color: '#10b981',
+                marginBottom: '1rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em'
+              }}>
+                FINANCE
+              </h3>
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                {['JPM', 'BAC', 'GS', 'WFC', 'MS', 'V', 'MA', 'C', 'BLK', 'SCHW', 'AXP', 'USB', 'PNC', 'COF', 'TFC'].map(sym => (
+                  <button
+                    key={sym}
+                    onClick={() => setCurrentSymbol(sym)}
+                    style={{
+                      padding: '0.5rem 1.25rem',
+                      background: 'rgba(16, 185, 129, 0.1)',
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      borderRadius: '0.5rem',
+                      color: '#10b981',
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)';
+                      e.currentTarget.style.borderColor = '#10b981';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)';
+                      e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                  >
+                    {sym}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Healthcare */}
+            <div>
+              <h3 style={{
+                fontSize: '0.875rem',
+                fontWeight: '600',
+                color: '#f472b6',
+                marginBottom: '1rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em'
+              }}>
+                HEALTHCARE
+              </h3>
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                {['JNJ', 'UNH', 'PFE', 'ABBV', 'TMO', 'MRK', 'LLY', 'CVS', 'ABT', 'DHR', 'BMY', 'AMGN', 'GILD', 'CI', 'REGN'].map(sym => (
+                  <button
+                    key={sym}
+                    onClick={() => setCurrentSymbol(sym)}
+                    style={{
+                      padding: '0.5rem 1.25rem',
+                      background: 'rgba(244, 114, 182, 0.1)',
+                      border: '1px solid rgba(244, 114, 182, 0.3)',
+                      borderRadius: '0.5rem',
+                      color: '#f472b6',
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(244, 114, 182, 0.2)';
+                      e.currentTarget.style.borderColor = '#f472b6';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(244, 114, 182, 0.1)';
+                      e.currentTarget.style.borderColor = 'rgba(244, 114, 182, 0.3)';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                  >
+                    {sym}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Consumer */}
+            <div>
+              <h3 style={{
+                fontSize: '0.875rem',
+                fontWeight: '600',
+                color: '#fbbf24',
+                marginBottom: '1rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em'
+              }}>
+                CONSUMER
+              </h3>
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                {['WMT', 'HD', 'NKE', 'SBUX', 'MCD', 'DIS', 'COST', 'PG', 'KO', 'PEP', 'TGT', 'LOW', 'BKNG', 'TJX', 'CMG'].map(sym => (
+                  <button
+                    key={sym}
+                    onClick={() => setCurrentSymbol(sym)}
+                    style={{
+                      padding: '0.5rem 1.25rem',
+                      background: 'rgba(251, 191, 36, 0.1)',
+                      border: '1px solid rgba(251, 191, 36, 0.3)',
+                      borderRadius: '0.5rem',
+                      color: '#fbbf24',
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(251, 191, 36, 0.2)';
+                      e.currentTarget.style.borderColor = '#fbbf24';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(251, 191, 36, 0.1)';
+                      e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.3)';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                  >
+                    {sym}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Energy */}
+            <div>
+              <h3 style={{
+                fontSize: '0.875rem',
+                fontWeight: '600',
+                color: '#a78bfa',
+                marginBottom: '1rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em'
+              }}>
+                ENERGY
+              </h3>
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                {['XOM', 'CVX', 'COP', 'SLB', 'EOG', 'PSX', 'VLO', 'OXY', 'MPC', 'PXD', 'KMI', 'WMB', 'HAL', 'BKR', 'DVN'].map(sym => (
+                  <button
+                    key={sym}
+                    onClick={() => setCurrentSymbol(sym)}
+                    style={{
+                      padding: '0.5rem 1.25rem',
+                      background: 'rgba(167, 139, 250, 0.1)',
+                      border: '1px solid rgba(167, 139, 250, 0.3)',
+                      borderRadius: '0.5rem',
+                      color: '#a78bfa',
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(167, 139, 250, 0.2)';
+                      e.currentTarget.style.borderColor = '#a78bfa';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(167, 139, 250, 0.1)';
+                      e.currentTarget.style.borderColor = 'rgba(167, 139, 250, 0.3)';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                  >
+                    {sym}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Industrials */}
+            <div>
+              <h3 style={{
+                fontSize: '0.875rem',
+                fontWeight: '600',
+                color: '#fb923c',
+                marginBottom: '1rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em'
+              }}>
+                INDUSTRIALS
+              </h3>
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                {['BA', 'CAT', 'HON', 'UPS', 'GE', 'RTX', 'LMT', 'DE', 'MMM', 'UNP', 'FDX', 'NSC', 'CSX', 'EMR', 'ETN'].map(sym => (
+                  <button
+                    key={sym}
+                    onClick={() => setCurrentSymbol(sym)}
+                    style={{
+                      padding: '0.5rem 1.25rem',
+                      background: 'rgba(251, 146, 60, 0.1)',
+                      border: '1px solid rgba(251, 146, 60, 0.3)',
+                      borderRadius: '0.5rem',
+                      color: '#fb923c',
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(251, 146, 60, 0.2)';
+                      e.currentTarget.style.borderColor = '#fb923c';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(251, 146, 60, 0.1)';
+                      e.currentTarget.style.borderColor = 'rgba(251, 146, 60, 0.3)';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                  >
+                    {sym}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div style={{
         background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
@@ -240,12 +533,6 @@ const CompanyAnalysis = ({ symbol: initialSymbol }) => {
           label="Overview"
         />
         <TabButton
-          active={activeTab === 'chart'}
-          onClick={() => setActiveTab('chart')}
-          icon={<Activity size={18} />}
-          label="Price Chart"
-        />
-        <TabButton
           active={activeTab === 'financials'}
           onClick={() => {
             setActiveTab('financials');
@@ -271,64 +558,6 @@ const CompanyAnalysis = ({ symbol: initialSymbol }) => {
       {/* Tab Content */}
       {activeTab === 'overview' && overview && (
         <OverviewTab overview={overview} symbol={currentSymbol} />
-      )}
-
-      {activeTab === 'chart' && (
-        <div>
-          {/* Timeframe Selector */}
-          <div style={{ 
-            display: 'flex', 
-            gap: '0.5rem', 
-            marginBottom: '1.5rem',
-            flexWrap: 'wrap'
-          }}>
-            {['daily', 'weekly', 'monthly'].map((tf) => (
-              <button
-                key={tf}
-                onClick={() => setSelectedTimeframe(tf)}
-                style={{
-                  padding: '0.5rem 1rem',
-                  borderRadius: '0.375rem',
-                  border: selectedTimeframe === tf ? '2px solid #60a5fa' : '1px solid #475569',
-                  background: selectedTimeframe === tf ? 'rgba(96, 165, 250, 0.2)' : '#334155',
-                  color: selectedTimeframe === tf ? '#60a5fa' : '#cbd5e1',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                  fontWeight: selectedTimeframe === tf ? '600' : '400',
-                  textTransform: 'capitalize'
-                }}
-              >
-                {tf}
-              </button>
-            ))}
-          </div>
-
-          {/* Price Chart */}
-          {priceLoading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
-              <Loader size={48} color="#60a5fa" className="spin" />
-            </div>
-          ) : priceData ? (
-            <PriceChart 
-              data={priceData.data || priceData} 
-              performance={priceData.performance}
-              symbol={currentSymbol}
-              timeframe={selectedTimeframe}
-            />
-          ) : (
-            <div style={{ 
-              padding: '3rem', 
-              textAlign: 'center', 
-              color: '#94a3b8',
-              background: 'rgba(30, 41, 59, 0.5)',
-              borderRadius: '0.75rem',
-              border: '1px solid #334155'
-            }}>
-              <Activity size={48} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
-              <p>Click a timeframe button to load price data</p>
-            </div>
-          )}
-        </div>
       )}
 
       {activeTab === 'financials' && (
@@ -357,9 +586,111 @@ const CompanyAnalysis = ({ symbol: initialSymbol }) => {
 // ==============================================
 const OverviewTab = ({ overview, symbol }) => {
   const healthScore = calculateHealthScore(overview);
+  
+  // Price chart state
+  const [priceData, setPriceData] = React.useState(null);
+  const [priceLoading, setPriceLoading] = React.useState(false);
+  const [selectedTimeframe, setSelectedTimeframe] = React.useState('daily');
+  
+  const API_URL = process.env.REACT_APP_API_URL || 'https://financial-analyst-backend-production-7175.up.railway.app/api';
+
+  // Fetch price data when symbol or timeframe changes
+  React.useEffect(() => {
+    if (symbol) {
+      fetchPriceData();
+    }
+  }, [symbol, selectedTimeframe]);
+
+  const fetchPriceData = async () => {
+    setPriceLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/stocks/${symbol}/prices/${selectedTimeframe}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setPriceData(data);
+    } catch (error) {
+      console.error('Error fetching price data:', error);
+      setPriceData(null);
+    } finally {
+      setPriceLoading(false);
+    }
+  };
 
   return (
     <div>
+      {/* Price Chart Section - AT TOP */}
+      <div style={{
+        background: 'rgba(30, 41, 59, 0.5)',
+        border: '1px solid #334155',
+        borderRadius: '0.75rem',
+        padding: '1.5rem',
+        marginBottom: '2rem'
+      }}>
+        {/* Timeframe Selector */}
+        <div style={{ 
+          display: 'flex', 
+          gap: '0.5rem', 
+          marginBottom: '1.5rem',
+          flexWrap: 'wrap'
+        }}>
+          {['daily', 'weekly', 'monthly'].map((tf) => (
+            <button
+              key={tf}
+              onClick={() => setSelectedTimeframe(tf)}
+              style={{
+                padding: '0.5rem 1rem',
+                borderRadius: '0.375rem',
+                border: selectedTimeframe === tf ? '2px solid #60a5fa' : '1px solid #475569',
+                background: selectedTimeframe === tf ? 'rgba(96, 165, 250, 0.2)' : '#334155',
+                color: selectedTimeframe === tf ? '#60a5fa' : '#cbd5e1',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+                fontWeight: selectedTimeframe === tf ? '600' : '400',
+                textTransform: 'capitalize',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                if (selectedTimeframe !== tf) {
+                  e.currentTarget.style.borderColor = '#60a5fa';
+                  e.currentTarget.style.background = 'rgba(96, 165, 250, 0.1)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (selectedTimeframe !== tf) {
+                  e.currentTarget.style.borderColor = '#475569';
+                  e.currentTarget.style.background = '#334155';
+                }
+              }}
+            >
+              {tf}
+            </button>
+          ))}
+        </div>
+
+        {/* Price Chart */}
+        {priceLoading ? (
+          <div style={{ padding: '3rem', textAlign: 'center' }}>
+            <Loader size={32} className="spin" style={{ color: '#60a5fa' }} />
+            <p style={{ color: '#94a3b8', marginTop: '1rem' }}>Loading price data...</p>
+          </div>
+        ) : priceData ? (
+          <PriceChart 
+            data={priceData.data || priceData.prices || priceData} 
+            performance={priceData.performance}
+            symbol={symbol}
+            timeframe={selectedTimeframe}
+          />
+        ) : (
+          <div style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8' }}>
+            No price data available
+          </div>
+        )}
+      </div>
+
       {/* Key Metrics Grid */}
       <div style={{
         display: 'grid',
@@ -643,17 +974,17 @@ const OverviewTab = ({ overview, symbol }) => {
           📊 Market Context & Analysis
         </h3>
         
-        {/* Stock News */}
-        <StockNewsSection symbol={symbol} />
-        
-        {/* Sector Analysis */}
-        <div style={{ marginTop: '2rem' }}>
-          <SectorAnalysisSection symbol={symbol} />
-        </div>
+        {/* Sector Analysis - MOVED TO TOP */}
+        <SectorAnalysisSection symbol={symbol} />
         
         {/* Social Sentiment */}
         <div style={{ marginTop: '2rem' }}>
           <SocialSentimentSection symbol={symbol} />
+        </div>
+        
+        {/* Stock News - MOVED TO BOTTOM */}
+        <div style={{ marginTop: '2rem' }}>
+          <StockNewsSection symbol={symbol} />
         </div>
       </div>
     </div>
