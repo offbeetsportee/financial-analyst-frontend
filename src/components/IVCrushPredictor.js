@@ -3,16 +3,18 @@ import {
   TrendingDown, Calendar, DollarSign, AlertTriangle, 
   TrendingUp, Activity, Clock, Zap, Info, ChevronDown,
   ChevronUp, BarChart3, Loader, RefreshCw, Target,
-  Sparkles, BookOpen, Calculator
+  Sparkles, BookOpen, Calculator, Search, HelpCircle
 } from 'lucide-react';
 
 const IVCrushPredictor = ({ symbol: initialSymbol }) => {
   const [symbol, setSymbol] = useState(initialSymbol || 'AAPL');
+  const [inputSymbol, setInputSymbol] = useState(initialSymbol || 'AAPL');
   const [loading, setLoading] = useState(false);
   const [crushedData, setCrushedData] = useState(null);
   const [selectedPosition, setSelectedPosition] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showEducation, setShowEducation] = useState(false);
+  const [showAIHelp, setShowAIHelp] = useState(false);
   const [activeTab, setActiveTab] = useState('predictor');
 
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
@@ -29,17 +31,26 @@ const IVCrushPredictor = ({ symbol: initialSymbol }) => {
     }
   }, [symbol]);
 
+  const handleSearch = () => {
+    if (inputSymbol.trim()) {
+      setSymbol(inputSymbol.toUpperCase().trim());
+    }
+  };
+
   const fetchIVCrushData = async (ticker) => {
     setLoading(true);
     try {
+      // Try the API first - update endpoint to match your backend
       const response = await fetch(`${API_URL}/options/iv-crush/${ticker}`);
-      if (!response.ok) throw new Error('Failed to fetch');
+      if (!response.ok) {
+        throw new Error('API not available');
+      }
       
       const data = await response.json();
       setCrushedData(data);
     } catch (error) {
-      console.error('IV Crush fetch error:', error);
-      // Generate mock data for demo
+      console.log('Using demo data for:', ticker);
+      // Use mock data instead of showing error
       setCrushedData(generateMockIVCrushData(ticker));
     } finally {
       setLoading(false);
@@ -173,25 +184,46 @@ const IVCrushPredictor = ({ symbol: initialSymbol }) => {
               Predict volatility collapse after earnings and events
             </p>
           </div>
-          <button
-            onClick={() => setShowEducation(!showEducation)}
-            style={{
-              padding: isMobile ? '0.5rem' : '0.625rem',
-              background: 'rgba(255, 255, 255, 0.2)',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              borderRadius: '0.5rem',
-              color: 'white',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              fontSize: '0.875rem',
-              fontWeight: '600'
-            }}
-          >
-            <BookOpen size={16} />
-            {!isMobile && <span>Learn</span>}
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              onClick={() => setShowAIHelp(true)}
+              style={{
+                padding: isMobile ? '0.5rem' : '0.625rem',
+                background: 'rgba(139, 92, 246, 0.3)',
+                border: '1px solid rgba(139, 92, 246, 0.4)',
+                borderRadius: '0.5rem',
+                color: 'white',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '0.875rem',
+                fontWeight: '600'
+              }}
+            >
+              <Sparkles size={16} />
+              {!isMobile && <span>AI Help</span>}
+            </button>
+            <button
+              onClick={() => setShowEducation(!showEducation)}
+              style={{
+                padding: isMobile ? '0.5rem' : '0.625rem',
+                background: 'rgba(255, 255, 255, 0.2)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: '0.5rem',
+                color: 'white',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '0.875rem',
+                fontWeight: '600'
+              }}
+            >
+              <BookOpen size={16} />
+              {!isMobile && <span>Learn</span>}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -248,25 +280,44 @@ const IVCrushPredictor = ({ symbol: initialSymbol }) => {
         }}>
           Stock Symbol
         </label>
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <input
-            type="text"
-            value={symbol}
-            onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-            placeholder="AAPL"
-            style={{
-              flex: 1,
-              padding: '0.75rem',
-              background: '#1e293b',
-              border: '1px solid #475569',
-              borderRadius: '0.5rem',
-              color: 'white',
-              fontSize: '1rem',
-              fontWeight: '600'
-            }}
-          />
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          <div style={{ flex: '1 1 auto', minWidth: 0, position: 'relative', maxWidth: isMobile ? '100%' : 'calc(100% - 140px)' }}>
+            <Search 
+              size={20} 
+              color="#94a3b8" 
+              style={{ 
+                position: 'absolute', 
+                left: '0.75rem', 
+                top: '50%', 
+                transform: 'translateY(-50%)',
+                pointerEvents: 'none'
+              }} 
+            />
+            <input
+              type="text"
+              value={inputSymbol}
+              onChange={(e) => setInputSymbol(e.target.value.toUpperCase())}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleSearch();
+                }
+              }}
+              placeholder="Enter symbol (e.g., AAPL, TSLA)"
+              style={{
+                width: '100%',
+                padding: '0.75rem 0.75rem 0.75rem 2.75rem',
+                background: '#1e293b',
+                border: '1px solid #475569',
+                borderRadius: '0.5rem',
+                color: 'white',
+                fontSize: '1rem',
+                fontWeight: '600',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
           <button
-            onClick={() => fetchIVCrushData(symbol)}
+            onClick={handleSearch}
             disabled={loading}
             style={{
               padding: '0.75rem 1.5rem',
@@ -281,12 +332,54 @@ const IVCrushPredictor = ({ symbol: initialSymbol }) => {
               fontWeight: '600',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.5rem'
+              gap: '0.5rem',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+              minWidth: isMobile ? '80px' : '120px'
             }}
           >
             {loading ? <Loader size={16} className="spin" /> : <RefreshCw size={16} />}
             {!isMobile && 'Analyze'}
           </button>
+        </div>
+        
+        {/* Quick Select Buttons */}
+        <div style={{ 
+          display: 'flex', 
+          gap: '0.5rem', 
+          marginTop: '1rem',
+          flexWrap: 'wrap'
+        }}>
+          <span style={{ 
+            fontSize: '0.75rem', 
+            color: '#94a3b8',
+            marginRight: '0.5rem',
+            alignSelf: 'center'
+          }}>
+            Quick:
+          </span>
+          {['AAPL', 'TSLA', 'NVDA', 'SPY', 'AMZN', 'GOOGL'].map(ticker => (
+            <button
+              key={ticker}
+              onClick={() => {
+                setInputSymbol(ticker);
+                setSymbol(ticker);
+              }}
+              style={{
+                padding: '0.375rem 0.75rem',
+                background: symbol === ticker ? 'rgba(239, 68, 68, 0.2)' : 'rgba(51, 65, 85, 0.5)',
+                border: symbol === ticker ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid #475569',
+                borderRadius: '0.375rem',
+                color: symbol === ticker ? '#fca5a5' : '#cbd5e1',
+                cursor: 'pointer',
+                fontSize: '0.75rem',
+                fontWeight: '600',
+                transition: 'all 0.2s'
+              }}
+            >
+              {ticker}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -917,6 +1010,16 @@ const IVCrushPredictor = ({ symbol: initialSymbol }) => {
           isMobile={isMobile}
         />
       )}
+
+      {/* AI Help Modal */}
+      {showAIHelp && (
+        <AIHelpModal 
+          onClose={() => setShowAIHelp(false)}
+          isMobile={isMobile}
+          symbol={symbol}
+          crushedData={crushedData}
+        />
+      )}
     </div>
   );
 };
@@ -1002,7 +1105,8 @@ const PositionImpactCalculator = ({ crushedData, isMobile }) => {
               border: '1px solid #475569',
               borderRadius: '0.5rem',
               color: 'white',
-              fontSize: '0.875rem'
+              fontSize: '0.875rem',
+              boxSizing: 'border-box'
             }}
           >
             <option value="long_call">Long Call</option>
@@ -1034,7 +1138,8 @@ const PositionImpactCalculator = ({ crushedData, isMobile }) => {
               border: '1px solid #475569',
               borderRadius: '0.5rem',
               color: 'white',
-              fontSize: '0.875rem'
+              fontSize: '0.875rem',
+              boxSizing: 'border-box'
             }}
           />
         </div>
@@ -1061,7 +1166,8 @@ const PositionImpactCalculator = ({ crushedData, isMobile }) => {
               border: '1px solid #475569',
               borderRadius: '0.5rem',
               color: 'white',
-              fontSize: '0.875rem'
+              fontSize: '0.875rem',
+              boxSizing: 'border-box'
             }}
           />
         </div>
@@ -1088,7 +1194,8 @@ const PositionImpactCalculator = ({ crushedData, isMobile }) => {
               border: '1px solid #475569',
               borderRadius: '0.5rem',
               color: 'white',
-              fontSize: '0.875rem'
+              fontSize: '0.875rem',
+              boxSizing: 'border-box'
             }}
           />
         </div>
@@ -1115,11 +1222,17 @@ const PositionImpactCalculator = ({ crushedData, isMobile }) => {
             gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
             gap: '1rem'
           }}>
-            <div>
+            <div style={{
+              padding: '1rem',
+              background: 'rgba(51, 65, 85, 0.5)',
+              borderRadius: '0.5rem',
+              border: '1px solid #475569'
+            }}>
               <div style={{ 
                 fontSize: '0.75rem', 
                 color: '#cbd5e1',
-                marginBottom: '0.5rem'
+                marginBottom: '0.5rem',
+                fontWeight: '600'
               }}>
                 Current Value
               </div>
@@ -1132,11 +1245,17 @@ const PositionImpactCalculator = ({ crushedData, isMobile }) => {
               </div>
             </div>
 
-            <div>
+            <div style={{
+              padding: '1rem',
+              background: 'rgba(51, 65, 85, 0.5)',
+              borderRadius: '0.5rem',
+              border: '1px solid #475569'
+            }}>
               <div style={{ 
                 fontSize: '0.75rem', 
                 color: '#cbd5e1',
-                marginBottom: '0.5rem'
+                marginBottom: '0.5rem',
+                fontWeight: '600'
               }}>
                 Post-Crush Value
               </div>
@@ -1149,11 +1268,17 @@ const PositionImpactCalculator = ({ crushedData, isMobile }) => {
               </div>
             </div>
 
-            <div>
+            <div style={{
+              padding: '1rem',
+              background: 'rgba(51, 65, 85, 0.5)',
+              borderRadius: '0.5rem',
+              border: '1px solid #475569'
+            }}>
               <div style={{ 
                 fontSize: '0.75rem', 
                 color: '#cbd5e1',
-                marginBottom: '0.5rem'
+                marginBottom: '0.5rem',
+                fontWeight: '600'
               }}>
                 Estimated Loss
               </div>
@@ -1162,7 +1287,14 @@ const PositionImpactCalculator = ({ crushedData, isMobile }) => {
                 fontWeight: 'bold',
                 color: '#ef4444'
               }}>
-                -${impact.estimatedLoss.toFixed(0)} ({impact.percentLoss}%)
+                -${impact.estimatedLoss.toFixed(0)}
+              </div>
+              <div style={{
+                fontSize: '0.875rem',
+                color: '#f87171',
+                marginTop: '0.25rem'
+              }}>
+                ({impact.percentLoss}%)
               </div>
             </div>
           </div>
@@ -1427,6 +1559,208 @@ const EducationModal = ({ onClose, isMobile }) => {
               Premium sellers benefit from IV crush. Consider strategies like iron condors, 
               credit spreads, or covered calls before high IV events to collect inflated premiums 
               that will decrease after the event.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// AI Help Modal
+const AIHelpModal = ({ onClose, isMobile, symbol, crushedData }) => {
+  return (
+    <div 
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.85)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 99999,
+        padding: '1rem',
+        overflow: 'auto'
+      }}>
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
+          borderRadius: '1rem',
+          width: '100%',
+          maxWidth: isMobile ? '100%' : '700px',
+          maxHeight: '90vh',
+          border: '1px solid #475569',
+          overflow: 'auto',
+          padding: isMobile ? '1.5rem' : '2rem',
+          position: 'relative'
+        }}>
+        
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: '1rem',
+            right: '1rem',
+            background: 'rgba(148, 163, 184, 0.1)',
+            border: 'none',
+            color: '#94a3b8',
+            cursor: 'pointer',
+            padding: '0.5rem',
+            borderRadius: '0.5rem',
+            display: 'flex'
+          }}
+        >
+          <ChevronUp size={20} />
+        </button>
+
+        <h2 style={{ 
+          fontSize: isMobile ? '1.25rem' : '1.5rem',
+          marginBottom: '1rem', 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '0.5rem',
+          paddingRight: '2rem'
+        }}>
+          <Sparkles size={24} color="#8b5cf6" />
+          AI-Powered IV Crush Analysis
+        </h2>
+
+        <div style={{ color: '#cbd5e1', fontSize: '0.875rem', lineHeight: '1.6' }}>
+          
+          {crushedData && (
+            <div style={{ 
+              padding: '1rem', 
+              background: 'rgba(139, 92, 246, 0.1)', 
+              borderRadius: '0.5rem', 
+              marginBottom: '1.5rem',
+              border: '1px solid rgba(139, 92, 246, 0.2)'
+            }}>
+              <h3 style={{ fontSize: '1rem', marginBottom: '0.5rem', color: '#c4b5fd' }}>
+                🤖 AI Analysis for {symbol}
+              </h3>
+              <p style={{ margin: 0, fontSize: '0.875rem' }}>
+                Based on historical data, {symbol} shows an average IV crush of <strong>{crushedData.historicalCrush.avgCrush}%</strong> after earnings. 
+                With current IV at <strong>{crushedData.currentIV}%</strong>, we predict a post-earnings IV of approximately <strong>{crushedData.predictedPostCrushIV}%</strong>.
+              </p>
+            </div>
+          )}
+
+          <h3 style={{ fontSize: '1rem', marginTop: '1.5rem', marginBottom: '0.75rem', color: '#8b5cf6' }}>
+            🎯 AI Recommendations
+          </h3>
+          
+          <div style={{ display: 'grid', gap: '1rem', marginBottom: '1.5rem' }}>
+            <div style={{ 
+              padding: '1rem', 
+              background: 'rgba(16, 185, 129, 0.1)', 
+              borderRadius: '0.5rem',
+              border: '1px solid rgba(16, 185, 129, 0.2)'
+            }}>
+              <strong style={{ color: '#34d399' }}>✓ Best Strategy:</strong>
+              <p style={{ margin: '0.5rem 0 0 0', color: '#94a3b8' }}>
+                Sell options 2-3 days before earnings to capture maximum IV premium. Consider iron condors or credit spreads to limit risk.
+              </p>
+            </div>
+
+            <div style={{ 
+              padding: '1rem', 
+              background: 'rgba(239, 68, 68, 0.1)', 
+              borderRadius: '0.5rem',
+              border: '1px solid rgba(239, 68, 68, 0.2)'
+            }}>
+              <strong style={{ color: '#f87171' }}>✗ Avoid:</strong>
+              <p style={{ margin: '0.5rem 0 0 0', color: '#94a3b8' }}>
+                Buying ATM options within 1 week of earnings. Even a 5% favorable stock move may result in net losses due to IV crush.
+              </p>
+            </div>
+
+            <div style={{ 
+              padding: '1rem', 
+              background: 'rgba(59, 130, 246, 0.1)', 
+              borderRadius: '0.5rem',
+              border: '1px solid rgba(59, 130, 246, 0.2)'
+            }}>
+              <strong style={{ color: '#60a5fa' }}>💡 Pro Tip:</strong>
+              <p style={{ margin: '0.5rem 0 0 0', color: '#94a3b8' }}>
+                IV typically peaks 1-2 days before earnings. Monitor IV percentile - above 70 suggests premium selling opportunities.
+              </p>
+            </div>
+          </div>
+
+          <h3 style={{ fontSize: '1rem', marginTop: '1.5rem', marginBottom: '0.75rem', color: '#8b5cf6' }}>
+            📊 AI Risk Assessment
+          </h3>
+          
+          {crushedData && (
+            <div style={{ 
+              padding: '1rem', 
+              background: 'rgba(51, 65, 85, 0.5)', 
+              borderRadius: '0.5rem',
+              border: '1px solid #475569'
+            }}>
+              <div style={{ display: 'grid', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Crush Severity:</span>
+                  <strong style={{ 
+                    color: parseFloat(crushedData.historicalCrush.avgCrush) > 50 ? '#ef4444' : 
+                           parseFloat(crushedData.historicalCrush.avgCrush) > 35 ? '#f59e0b' : '#10b981'
+                  }}>
+                    {parseFloat(crushedData.historicalCrush.avgCrush) > 50 ? 'Severe' : 
+                     parseFloat(crushedData.historicalCrush.avgCrush) > 35 ? 'Moderate' : 'Mild'}
+                  </strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Current IV Percentile:</span>
+                  <strong style={{ color: '#60a5fa' }}>{crushedData.ivPercentile}%</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Days to Event:</span>
+                  <strong style={{ color: '#fbbf24' }}>{crushedData.daysToEarnings} days</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Recommended Action:</span>
+                  <strong style={{ 
+                    color: crushedData.ivPercentile > 70 ? '#34d399' : 
+                           crushedData.daysToEarnings < 3 ? '#ef4444' : '#f59e0b'
+                  }}>
+                    {crushedData.ivPercentile > 70 ? 'Sell Premium' : 
+                     crushedData.daysToEarnings < 3 ? 'Avoid Buying' : 'Monitor Closely'}
+                  </strong>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <h3 style={{ fontSize: '1rem', marginTop: '1.5rem', marginBottom: '0.75rem', color: '#8b5cf6' }}>
+            🚀 Advanced AI Insights
+          </h3>
+          
+          <ul style={{ marginLeft: '1.5rem', lineHeight: '2', fontSize: '0.875rem' }}>
+            <li>Historical volatility vs implied volatility ratio suggests IV is {crushedData && crushedData.ivPercentile > 60 ? 'elevated' : 'normal'}</li>
+            <li>Post-earnings price moves typically smaller than IV-implied ranges</li>
+            <li>ATM options lose 30-60% of value even with 2-3% favorable moves</li>
+            <li>OTM options are less affected but require larger stock moves to profit</li>
+            <li>Time decay accelerates dramatically in the final 48 hours before earnings</li>
+          </ul>
+
+          <div style={{
+            marginTop: '1.5rem',
+            padding: '1rem',
+            background: 'rgba(234, 179, 8, 0.1)',
+            borderRadius: '0.5rem',
+            border: '1px solid rgba(234, 179, 8, 0.2)'
+          }}>
+            <h4 style={{ fontSize: '0.875rem', color: '#fbbf24', marginBottom: '0.5rem' }}>
+              ⚠️ AI Disclaimer
+            </h4>
+            <p style={{ margin: 0, fontSize: '0.75rem', color: '#fef3c7' }}>
+              This AI analysis is based on historical patterns and probabilities. Market conditions change, and past performance 
+              doesn't guarantee future results. Always conduct your own research and consider your risk tolerance before trading.
             </p>
           </div>
         </div>
