@@ -21,6 +21,7 @@ import AIChat from './components/AIChat';
 import OptionsChainExplorer from './components/OptionsChainExplorer';
 import OptionsStrategyBuilder from './components/OptionsStrategyBuilder';
 import OptionsScreener from './components/OptionsScreener';
+import IVCrushPredictor from './components/IVCrushPredictor'; 
 import './App.css';
 
 function App() {
@@ -486,7 +487,7 @@ useEffect(() => {
 
       <div style={{ maxWidth: '1200px', margin: '1rem auto', padding: '0 1rem' }}>
         <div className="tabs-container tab-scroll-container" style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid #334155', marginBottom: '2rem' }}>
-          {['market', 'company', 'compare', 'options','portfolio', 'watchlist', 'education', 'settings'].map(tab => (
+         {['market', 'company', 'compare', 'options', 'iv-crush', 'portfolio', 'watchlist', 'education', 'settings'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -501,7 +502,7 @@ useEffect(() => {
                 textTransform: 'capitalize'
               }}
             >
-              {tab}
+            {tab === 'iv-crush' ? 'IV Crush' : tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
           ))}
         </div>
@@ -1145,6 +1146,13 @@ useEffect(() => {
 
           </div>
         )}
+        {activeTab === 'iv-crush' && (
+  <div>
+    <IVCrushPredictor symbol={selectedStock} />
+  </div>
+)}
+
+
 
         {activeTab === 'education' && (
           <Education fredData={fredData} />
