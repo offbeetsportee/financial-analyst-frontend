@@ -11,6 +11,7 @@ import StockNews from './StockNews';
 import SectorAnalysis from './SectorAnalysis';
 import SocialSentiment from './SocialSentiment';
 import AlphaIntelligence from './AlphaIntelligence';
+import EarningsCalendar from './EarningsCalendar.js';
 
 const CompanyAnalysis = ({ symbol: initialSymbol }) => {
   const [currentSymbol, setCurrentSymbol] = useState(initialSymbol || '');
@@ -571,8 +572,8 @@ const CompanyAnalysis = ({ symbol: initialSymbol }) => {
         />
       )}
 
-      {activeTab === 'earnings' && earnings && (
-        <EarningsTab earnings={earnings} />
+      {activeTab === 'earnings' && (
+      <EarningsCalendar symbol={currentSymbol} />
       )}
 
       {activeTab === 'health' && overview && (
