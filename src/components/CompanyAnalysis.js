@@ -176,23 +176,24 @@ const CompanyAnalysis = ({ symbol: initialSymbol }) => {
   }
 
   return (
-    <div>
+    <div style={{ width: '100%', maxWidth: '100%', overflowX: 'hidden' }}>
       {/* Header */}
       <div style={{
         background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
         borderRadius: '0.75rem',
-        padding: '2rem',
+        padding: 'clamp(1rem, 3vw, 2rem)',
         marginBottom: '2rem'
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
+          <div style={{ flex: 1, minWidth: '200px' }}>
             <h2 style={{
-              fontSize: '2rem',
+              fontSize: 'clamp(1.25rem, 4vw, 2rem)',
               fontWeight: 'bold',
               marginBottom: '0.5rem',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.5rem'
+              gap: '0.5rem',
+              flexWrap: 'wrap'
             }}>
               <Building2 size={32} color="white" />
               {overview?.name || currentSymbol}
@@ -228,7 +229,9 @@ const CompanyAnalysis = ({ symbol: initialSymbol }) => {
         marginBottom: '1.5rem',
         borderBottom: '2px solid #334155',
         paddingBottom: '0.5rem',
-        overflowX: 'auto'
+        overflowX: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        scrollbarWidth: 'thin'
       }}>
         <TabButton
           active={activeTab === 'overview'}
@@ -461,6 +464,168 @@ const OverviewTab = ({ overview, symbol }) => {
         </div>
       )}
 
+      {/* Revenue & Valuation Breakdown Pie Chart */}
+      <div style={{
+        background: 'rgba(30, 41, 59, 0.5)',
+        border: '1px solid #334155',
+        borderRadius: '0.75rem',
+        padding: '1.5rem',
+        marginBottom: '2rem'
+      }}>
+        <h3 style={{ 
+          fontSize: '1.125rem', 
+          marginBottom: '1.5rem', 
+          fontWeight: '600',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem'
+        }}>
+          <PieChart size={20} color="#8b5cf6" />
+          Company Metrics Breakdown
+        </h3>
+        
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: '2rem'
+        }}>
+          {/* Key Metrics Pie Visual */}
+          <div>
+            <h4 style={{ 
+              fontSize: '0.875rem', 
+              color: '#cbd5e1', 
+              marginBottom: '1rem',
+              fontWeight: '600'
+            }}>
+              Market Valuation Distribution
+            </h4>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.75rem'
+            }}>
+              {[
+                { label: 'Market Cap', value: overview.marketCap, color: '#10b981' },
+                { label: 'Enterprise Value', value: overview.enterpriseValue || overview.marketCap * 1.1, color: '#60a5fa' },
+                { label: 'Revenue (TTM)', value: overview.revenue, color: '#8b5cf6' }
+              ].map((metric, idx) => {
+                const total = overview.marketCap + (overview.enterpriseValue || overview.marketCap * 1.1) + overview.revenue;
+                const percentage = ((metric.value / total) * 100).toFixed(1);
+                
+                return (
+                  <div key={idx}>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '0.5rem'
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem'
+                      }}>
+                        <div style={{
+                          width: '12px',
+                          height: '12px',
+                          background: metric.color,
+                          borderRadius: '2px'
+                        }} />
+                        <span style={{ 
+                          fontSize: '0.75rem', 
+                          color: '#cbd5e1',
+                          fontWeight: '600'
+                        }}>
+                          {metric.label}
+                        </span>
+                      </div>
+                      <span style={{
+                        fontSize: '0.75rem',
+                        color: metric.color,
+                        fontWeight: '700'
+                      }}>
+                        {percentage}%
+                      </span>
+                    </div>
+                    <div style={{
+                      height: '24px',
+                      background: 'rgba(15, 23, 42, 0.6)',
+                      borderRadius: '0.5rem',
+                      overflow: 'hidden'
+                    }}>
+                      <div style={{
+                        height: '100%',
+                        width: `${percentage}%`,
+                        background: `linear-gradient(to right, ${metric.color}, ${metric.color}cc)`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        paddingLeft: '0.75rem',
+                        transition: 'width 0.5s ease'
+                      }}>
+                        <span style={{
+                          fontSize: '0.7rem',
+                          color: 'white',
+                          fontWeight: '700'
+                        }}>
+                          ${formatLargeNumber(metric.value)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Financial Ratios */}
+          <div>
+            <h4 style={{ 
+              fontSize: '0.875rem', 
+              color: '#cbd5e1', 
+              marginBottom: '1rem',
+              fontWeight: '600'
+            }}>
+              Key Financial Ratios
+            </h4>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: '0.75rem'
+            }}>
+              {[
+                { label: 'P/E Ratio', value: overview.peRatio?.toFixed(2) || 'N/A', color: '#60a5fa' },
+                { label: 'P/B Ratio', value: overview.priceToBook?.toFixed(2) || 'N/A', color: '#10b981' },
+                { label: 'Debt/Equity', value: overview.debtToEquity?.toFixed(2) || 'N/A', color: '#f59e0b' },
+                { label: 'Current Ratio', value: overview.currentRatio?.toFixed(2) || 'N/A', color: '#8b5cf6' }
+              ].map((ratio, idx) => (
+                <div key={idx} style={{
+                  background: 'rgba(15, 23, 42, 0.6)',
+                  border: `1px solid ${ratio.color}44`,
+                  borderRadius: '0.5rem',
+                  padding: '0.75rem'
+                }}>
+                  <div style={{
+                    fontSize: '0.7rem',
+                    color: '#94a3b8',
+                    marginBottom: '0.25rem',
+                    fontWeight: '600'
+                  }}>
+                    {ratio.label}
+                  </div>
+                  <div style={{
+                    fontSize: '1.25rem',
+                    color: ratio.color,
+                    fontWeight: '700'
+                  }}>
+                    {ratio.value}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* ✅ ADD: Market Context Section */}
       <div style={{
         background: 'rgba(30, 41, 59, 0.5)',
@@ -543,42 +708,64 @@ const FinancialsTab = ({ incomeStatements, balanceSheets, cashFlows, period, set
         </button>
       </div>
 
-      {/* Revenue Chart */}
+      {/* Revenue and Net Income Charts - SIDE BY SIDE */}
       <div style={{
-        background: 'rgba(30, 41, 59, 0.5)',
-        border: '1px solid #334155',
-        borderRadius: '0.75rem',
-        padding: '1.5rem',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+        gap: '1.5rem',
         marginBottom: '1.5rem'
       }}>
-        <h3 style={{ fontSize: '1.125rem', marginBottom: '1rem', fontWeight: '600' }}>
-          Revenue Trend
-        </h3>
-        <SimpleBarChart
-          data={incomeStatements.slice(0, 8).reverse()}
-          dataKey="revenue"
-          label="Revenue"
-          color="#10b981"
-        />
-      </div>
+        {/* Revenue Chart */}
+        <div style={{
+          background: 'rgba(30, 41, 59, 0.5)',
+          border: '1px solid #334155',
+          borderRadius: '0.75rem',
+          padding: '1.5rem'
+        }}>
+          <h3 style={{ 
+            fontSize: '1.125rem', 
+            marginBottom: '1rem', 
+            fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}>
+            <TrendingUp size={20} color="#10b981" />
+            Revenue Trend
+          </h3>
+          <SimpleBarChart
+            data={incomeStatements.slice(0, 8).reverse()}
+            dataKey="revenue"
+            label="Revenue"
+            color="#10b981"
+          />
+        </div>
 
-      {/* Net Income Chart */}
-      <div style={{
-        background: 'rgba(30, 41, 59, 0.5)',
-        border: '1px solid #334155',
-        borderRadius: '0.75rem',
-        padding: '1.5rem',
-        marginBottom: '1.5rem'
-      }}>
-        <h3 style={{ fontSize: '1.125rem', marginBottom: '1rem', fontWeight: '600' }}>
-          Net Income Trend
-        </h3>
-        <SimpleBarChart
-          data={incomeStatements.slice(0, 8).reverse()}
-          dataKey="netIncome"
-          label="Net Income"
-          color="#60a5fa"
-        />
+        {/* Net Income Chart */}
+        <div style={{
+          background: 'rgba(30, 41, 59, 0.5)',
+          border: '1px solid #334155',
+          borderRadius: '0.75rem',
+          padding: '1.5rem'
+        }}>
+          <h3 style={{ 
+            fontSize: '1.125rem', 
+            marginBottom: '1rem', 
+            fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}>
+            <DollarSign size={20} color="#60a5fa" />
+            Net Income Trend
+          </h3>
+          <SimpleBarChart
+            data={incomeStatements.slice(0, 8).reverse()}
+            dataKey="netIncome"
+            label="Net Income"
+            color="#60a5fa"
+          />
+        </div>
       </div>
 
       {/* Profit Margins Chart */}
@@ -949,38 +1136,111 @@ const SimpleBarChart = ({ data, dataKey, label, color }) => {
   const maxValue = Math.max(...data.map(d => d[dataKey] || 0));
 
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.5rem', height: '200px' }}>
-      {data.map((item, idx) => {
-        const height = ((item[dataKey] || 0) / maxValue) * 100;
-        return (
-          <div
-            key={idx}
-            style={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}
-          >
-            <div style={{ fontSize: '0.65rem', color: '#94a3b8' }}>
-              ${formatLargeNumber(item[dataKey])}
-            </div>
+    <div style={{ 
+      width: '100%',
+      height: '280px',
+      position: 'relative',
+      overflowX: 'auto',
+      background: 'rgba(15, 23, 42, 0.4)',
+      borderRadius: '0.5rem',
+      padding: '3rem 0.5rem 3rem 0.5rem'
+    }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'flex-end',
+        gap: '1.25rem', // Increased gap for more spacing
+        height: '100%',
+        minWidth: 'fit-content',
+        paddingLeft: '1rem',
+        paddingRight: '1rem'
+      }}>
+        {data.map((item, idx) => {
+          // TRUE percentage from 0-100% based on max value
+          const height = ((item[dataKey] || 0) / maxValue) * 100;
+          
+          return (
             <div
+              key={idx}
               style={{
-                width: '100%',
-                height: `${height}%`,
-                background: color,
-                borderRadius: '0.25rem 0.25rem 0 0',
-                minHeight: '2px'
+                flex: 1,
+                minWidth: '50px', // Reduced from 70px for sleeker look
+                maxWidth: '60px', // Added max width to keep bars slim
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'flex-end',
+                alignItems: 'center',
+                position: 'relative'
               }}
-            />
-            <div style={{ fontSize: '0.65rem', color: '#64748b' }}>
-              {item.fiscalDate?.substring(0, 7) || ''}
+            >
+              {/* Value on top - ABSOLUTE positioning */}
+              <div style={{ 
+                position: 'absolute',
+                top: '-2.5rem',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                fontSize: '0.7rem', // Slightly smaller
+                color: '#cbd5e1',
+                fontWeight: '600', // Less bold than 700
+                whiteSpace: 'nowrap',
+                textShadow: '0 1px 2px rgba(0,0,0,0.8)'
+              }}>
+                ${formatLargeNumber(item[dataKey])}
+              </div>
+              
+              {/* Bar - using height percentage */}
+              <div
+                style={{
+                  width: '100%',
+                  height: `${Math.max(height, 5)}%`,
+                  background: `linear-gradient(180deg, ${color}dd 0%, ${color} 100%)`, // Subtle gradient
+                  borderRadius: '0.375rem 0.375rem 0 0', // Slightly less rounded
+                  boxShadow: `0 -1px 8px ${color}33`, // Softer shadow
+                  border: 'none', // Removed border for cleaner look
+                  position: 'relative',
+                  transition: 'all 0.3s ease',
+                  cursor: 'pointer',
+                  opacity: 0.95
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.opacity = '1';
+                  e.currentTarget.style.transform = 'scaleY(1.02)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = '0.95';
+                  e.currentTarget.style.transform = 'scaleY(1)';
+                }}
+                title={`${label}: $${formatLargeNumber(item[dataKey])}`}
+              >
+                {/* Subtle shine effect */}
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: '20%',
+                  right: '20%',
+                  height: '25%',
+                  background: 'linear-gradient(to bottom, rgba(255,255,255,0.15), transparent)',
+                  borderRadius: '0.25rem'
+                }} />
+              </div>
+              
+              {/* Date on bottom - ABSOLUTE positioning */}
+              <div style={{ 
+                position: 'absolute',
+                bottom: '-2.5rem',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                fontSize: '0.65rem', // Slightly smaller
+                color: '#94a3b8',
+                fontWeight: '500', // Less bold
+                whiteSpace: 'nowrap'
+              }}>
+                {item.fiscalDate?.substring(0, 7) || ''}
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 };
@@ -990,21 +1250,41 @@ const SimpleLineChart = ({ data, lines }) => {
 
   return (
     <div>
-      {/* Legend */}
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+      {/* Legend - matching earnings style */}
+      <div style={{ 
+        display: 'flex', 
+        gap: '1rem', 
+        marginBottom: '1rem', 
+        flexWrap: 'wrap'
+      }}>
         {lines.map((line, idx) => (
-          <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={{ width: '12px', height: '12px', background: line.color, borderRadius: '2px' }} />
-            <span style={{ fontSize: '0.75rem', color: '#cbd5e1' }}>{line.label}</span>
+          <div key={idx} style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '0.5rem'
+          }}>
+            <div style={{ 
+              width: '12px', 
+              height: '12px', 
+              background: line.color, 
+              borderRadius: '2px' 
+            }} />
+            <span style={{ 
+              fontSize: '0.75rem', 
+              color: '#cbd5e1',
+              fontWeight: '600'
+            }}>
+              {line.label}
+            </span>
           </div>
         ))}
       </div>
 
-      {/* Simple representation - in production, use recharts or similar */}
-      <div style={{ fontSize: '0.875rem', color: '#94a3b8' }}>
+      {/* Table matching earnings report style */}
+      <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ borderBottom: '1px solid #334155' }}>
+            <tr style={{ borderBottom: '2px solid #334155' }}>
               <th style={{ ...tableHeaderStyle, textAlign: 'left' }}>Period</th>
               {lines.map((line, idx) => (
                 <th key={idx} style={{ ...tableHeaderStyle, color: line.color }}>
@@ -1016,18 +1296,30 @@ const SimpleLineChart = ({ data, lines }) => {
           <tbody>
             {data.map((item, idx) => (
               <tr key={idx} style={{ borderBottom: '1px solid #334155' }}>
-                <td style={{ ...tableCellStyle, color: '#cbd5e1' }}>
+                <td style={{ ...tableCellStyle, textAlign: 'left', fontWeight: '600' }}>
                   {item.fiscalDate?.substring(0, 7) || ''}
                 </td>
-                {lines.map((line, lineIdx) => (
-                  <td key={lineIdx} style={{ ...tableCellStyle, color: line.color }}>
-                    {typeof item[line.dataKey] === 'number'
-                      ? item[line.dataKey] > 1
-                        ? `$${formatLargeNumber(item[line.dataKey])}`
-                        : `${(item[line.dataKey] * 100).toFixed(2)}%`
-                      : 'N/A'}
-                  </td>
-                ))}
+                {lines.map((line, lineIdx) => {
+                  const value = item[line.dataKey];
+                  const displayValue = typeof value === 'number'
+                    ? value > 1
+                      ? `$${formatLargeNumber(value)}`
+                      : `${(value * 100).toFixed(2)}%`
+                    : 'N/A';
+                  
+                  return (
+                    <td 
+                      key={lineIdx} 
+                      style={{ 
+                        ...tableCellStyle,
+                        color: line.color,
+                        fontWeight: '600'
+                      }}
+                    >
+                      {displayValue}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>
@@ -1131,6 +1423,8 @@ const SocialSentimentSection = ({ symbol }) => {
 // PRICE CHART COMPONENT
 // ==============================================
 const PriceChart = ({ data, performance, symbol, timeframe }) => {
+  const [hoveredPoint, setHoveredPoint] = React.useState(null);
+  
   if (!data || data.length === 0) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>
@@ -1298,17 +1592,76 @@ const PriceChart = ({ data, performance, symbol, timeframe }) => {
               strokeWidth="2"
             />
 
-            {/* Data points */}
+            {/* Data points - INTERACTIVE */}
             {data.map((d, i) => (
               <circle
                 key={i}
                 cx={xScale(i)}
                 cy={yScale(d.close)}
-                r="3"
-                fill="#60a5fa"
-                opacity={i % Math.floor(data.length / 10) === 0 ? 1 : 0}
+                r={hoveredPoint === i ? "6" : "4"}
+                fill={hoveredPoint === i ? "#60a5fa" : "#3b82f6"}
+                stroke={hoveredPoint === i ? "white" : "none"}
+                strokeWidth={hoveredPoint === i ? "2" : "0"}
+                opacity={hoveredPoint === i ? 1 : 0.7}
+                style={{ cursor: 'pointer', transition: 'all 0.2s' }}
+                onMouseEnter={() => setHoveredPoint(i)}
+                onMouseLeave={() => setHoveredPoint(null)}
               />
             ))}
+
+            {/* Hover Tooltip */}
+            {hoveredPoint !== null && (
+              <g>
+                {/* Vertical line */}
+                <line
+                  x1={xScale(hoveredPoint)}
+                  y1={0}
+                  x2={xScale(hoveredPoint)}
+                  y2={chartHeight}
+                  stroke="#60a5fa"
+                  strokeWidth="1"
+                  strokeDasharray="4,4"
+                  opacity="0.5"
+                />
+                
+                {/* Tooltip box */}
+                <g transform={`translate(${xScale(hoveredPoint)}, ${yScale(data[hoveredPoint].close) - 60})`}>
+                  <rect
+                    x="-60"
+                    y="0"
+                    width="120"
+                    height="50"
+                    fill="rgba(30, 41, 59, 0.95)"
+                    stroke="#60a5fa"
+                    strokeWidth="2"
+                    rx="8"
+                  />
+                  <text
+                    x="0"
+                    y="20"
+                    textAnchor="middle"
+                    fill="white"
+                    fontSize="14"
+                    fontWeight="bold"
+                  >
+                    ${data[hoveredPoint].close.toFixed(2)}
+                  </text>
+                  <text
+                    x="0"
+                    y="38"
+                    textAnchor="middle"
+                    fill="#94a3b8"
+                    fontSize="11"
+                  >
+                    {new Date(data[hoveredPoint].date).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric'
+                    })}
+                  </text>
+                </g>
+              </g>
+            )}
 
             {/* X-axis labels */}
             {data
