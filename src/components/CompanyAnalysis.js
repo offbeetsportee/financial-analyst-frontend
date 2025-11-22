@@ -6,6 +6,11 @@ import {
   Users, FileText, Briefcase, Award, Target, TrendingDown
 } from 'lucide-react';
 
+// Import existing components
+import StockNews from './StockNews';
+import SectorAnalysis from './SectorAnalysis';
+import SocialSentiment from './SocialSentiment';
+
 const CompanyAnalysis = ({ symbol: initialSymbol }) => {
   const [currentSymbol, setCurrentSymbol] = useState(initialSymbol || '');
   const [activeTab, setActiveTab] = useState('overview');
@@ -262,7 +267,7 @@ const CompanyAnalysis = ({ symbol: initialSymbol }) => {
 
       {/* Tab Content */}
       {activeTab === 'overview' && overview && (
-        <OverviewTab overview={overview} />
+        <OverviewTab overview={overview} symbol={currentSymbol} />
       )}
 
       {activeTab === 'chart' && (
@@ -347,7 +352,7 @@ const CompanyAnalysis = ({ symbol: initialSymbol }) => {
 // ==============================================
 // OVERVIEW TAB
 // ==============================================
-const OverviewTab = ({ overview }) => {
+const OverviewTab = ({ overview, symbol }) => {
   const healthScore = calculateHealthScore(overview);
 
   return (
@@ -443,7 +448,8 @@ const OverviewTab = ({ overview }) => {
           background: 'rgba(30, 41, 59, 0.5)',
           border: '1px solid #334155',
           borderRadius: '0.75rem',
-          padding: '1.5rem'
+          padding: '1.5rem',
+          marginBottom: '2rem'
         }}>
           <h3 style={{ fontSize: '1.125rem', marginBottom: '1rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <FileText size={20} color="#94a3b8" />
@@ -454,6 +460,37 @@ const OverviewTab = ({ overview }) => {
           </p>
         </div>
       )}
+
+      {/* ✅ ADD: Market Context Section */}
+      <div style={{
+        background: 'rgba(30, 41, 59, 0.5)',
+        border: '1px solid #334155',
+        borderRadius: '0.75rem',
+        padding: '1.5rem',
+        marginBottom: '1.5rem'
+      }}>
+        <h3 style={{ 
+          fontSize: '1.25rem', 
+          marginBottom: '1.5rem', 
+          fontWeight: '600',
+          color: '#60a5fa'
+        }}>
+          📊 Market Context & Analysis
+        </h3>
+        
+        {/* Stock News */}
+        <StockNewsSection symbol={symbol} />
+        
+        {/* Sector Analysis */}
+        <div style={{ marginTop: '2rem' }}>
+          <SectorAnalysisSection symbol={symbol} />
+        </div>
+        
+        {/* Social Sentiment */}
+        <div style={{ marginTop: '2rem' }}>
+          <SocialSentimentSection symbol={symbol} />
+        </div>
+      </div>
     </div>
   );
 };
@@ -1073,6 +1110,21 @@ const tableCellStyle = {
   fontSize: '0.875rem',
   color: '#cbd5e1',
   textAlign: 'right'
+};
+
+// ==============================================
+// WRAPPER COMPONENTS FOR OVERVIEW TAB
+// ==============================================
+const StockNewsSection = ({ symbol }) => {
+  return <StockNews symbol={symbol} />;
+};
+
+const SectorAnalysisSection = ({ symbol }) => {
+  return <SectorAnalysis symbol={symbol} />;
+};
+
+const SocialSentimentSection = ({ symbol }) => {
+  return <SocialSentiment symbol={symbol} />;
 };
 
 // ==============================================
