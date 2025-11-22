@@ -957,6 +957,7 @@ const OverviewTab = ({ overview, symbol }) => {
           </div>
         </div>
       </div>
+      
 
       {/* ✅ ADD: Market Context Section */}
       <div style={{
@@ -978,16 +979,16 @@ const OverviewTab = ({ overview, symbol }) => {
         {/* Sector Analysis - MOVED TO TOP */}
         <SectorAnalysisSection symbol={symbol} />
         
+        {/* Stock News - MOVED TO BOTTOM */}
+<       div style={{ marginTop: '2rem' }}>
+       <AlphaIntelligence symbol={symbol} />
+      </div>
+      
         {/* Social Sentiment */}
         <div style={{ marginTop: '2rem' }}>
           <SocialSentimentSection symbol={symbol} />
         </div>
         
-        {/* Stock News - MOVED TO BOTTOM */}
-        // Replace in Market Context section
-<       div style={{ marginTop: '2rem' }}>
-       <AlphaIntelligence symbol={symbol} />
-      </div>
       </div>
     </div>
   );
