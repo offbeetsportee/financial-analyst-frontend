@@ -221,8 +221,15 @@ const OptionsScreener = ({ onAddToBuilder }) => {
         : filterConfig.optionType === 'calls' ? 'call' : 'put';
       
       const strike = 100 + (Math.random() * 200);
-      const premium = filterConfig.premiumMin + (Math.random() * (filterConfig.premiumMax - filterConfig.premiumMin));
-      const dte = filterConfig.dteMin + Math.floor(Math.random() * (filterConfig.dteMax - filterConfig.dteMin));
+      
+      // Fix premium calculation - ensure valid range
+      const premiumMin = parseFloat(filterConfig.premiumMin) || 0;
+      const premiumMax = parseFloat(filterConfig.premiumMax) || 50;
+      const premium = premiumMin + (Math.random() * (premiumMax - premiumMin));
+      
+      const dteMin = parseInt(filterConfig.dteMin) || 7;
+      const dteMax = parseInt(filterConfig.dteMax) || 90;
+      const dte = dteMin + Math.floor(Math.random() * (dteMax - dteMin));
       
       results.push({
         symbol,
