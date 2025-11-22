@@ -384,6 +384,29 @@ const OptionsChainExplorer = ({ symbol: initialSymbol, underlyingPrice: initialP
             setShowSearchResults={setShowSearchResults}
           />
         </div>
+        {/* Demo Data Warning Banner - ADD THIS */}
+        {expirations.length > 0 && (expirations[0] === 'Demo Data' || expirations[0].includes('2099') || expirations[0].includes('99-99')) && (
+          <div style={{
+            background: 'rgba(251, 191, 36, 0.15)',
+            border: '1px solid #fbbf24',
+            borderRadius: '0.5rem',
+            padding: '0.75rem 1rem',
+            marginBottom: '1rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem'
+          }}>
+            <AlertCircle size={20} color="#fbbf24" />
+            <div style={{ flex: 1 }}>
+              <div style={{ color: '#fbbf24', fontWeight: '600', fontSize: '0.875rem' }}>
+                📊 Demo Data - Market Closed
+              </div>
+              <div style={{ color: '#cbd5e1', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                Real options data available Monday-Friday, 9:30 AM - 4:00 PM ET
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Summary Stats */}
         {optionsData && (
@@ -455,17 +478,23 @@ const OptionsChainExplorer = ({ symbol: initialSymbol, underlyingPrice: initialP
             minWidth: '200px'
           }}
         >
-          {expirations.map(exp => (
-            <option key={exp} value={exp}>
-              {new Date(exp).toLocaleDateString('en-US', { 
-                month: 'short', 
-                day: 'numeric', 
-                year: 'numeric' 
-              })}
-              {' '}
-              ({getDaysToExpiration(exp)} days)
-            </option>
-          ))}
+          {expirations.map(exp => {
+  const isDemo = exp === 'Demo Data' || exp.includes('2099') || exp.includes('99-99');
+  const formattedDate = isDemo ? 'Demo Data' : new Date(exp).toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric', 
+    year: 'numeric' 
+  });
+  const days = getDaysToExpiration(exp);
+  
+  return (
+    <option key={exp} value={exp}>
+      {formattedDate}
+      {!isDemo && days !== 'N/A' && ` (${days} days)`}
+      {isDemo && ' (Market Closed)'}
+    </option>
+  );
+})}
         </select>
       </div>
 
@@ -1409,11 +1438,25 @@ const GreekCard = ({ label, value, description, color }) => (
 
 // Helper functions
 function getDaysToExpiration(expirationDate) {
+  // Handle demo data
+  if (!expirationDate || 
+      expirationDate === 'Demo Data' || 
+      expirationDate.includes('2099') || 
+      expirationDate.includes('99-99')) {
+    return 'N/A';
+  }
+  
   const now = new Date();
   const exp = new Date(expirationDate);
+  
+  // Check if date is valid
+  if (isNaN(exp.getTime())) {
+    return 'N/A';
+  }
+  
   const diffTime = exp - now;
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return diffDays;
+  return diffDays >= 0 ? diffDays : 0;
 }
 
 function getIVColor(iv) {
