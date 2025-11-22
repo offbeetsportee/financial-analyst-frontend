@@ -20,6 +20,7 @@ import SocialSentiment from './components/SocialSentiment';
 import AIChat from './components/AIChat';
 import OptionsChainExplorer from './components/OptionsChainExplorer';
 import OptionsStrategyBuilder from './components/OptionsStrategyBuilder';
+import OptionsScreener from './components/OptionsScreener';
 import './App.css';
 
 function App() {
@@ -945,6 +946,30 @@ useEffect(() => {
       >
         📊 Options Chain
       </button>
+
+       
+      {/* ADD THE SCREENER BUTTON HERE ⬇️ RIGHT AFTER THE OPTIONS CHAIN BUTTON */}
+      <button
+        onClick={() => setOptionsSubTab('screener')}
+        style={{
+          padding: '0.75rem 1.25rem',
+          background: optionsSubTab === 'screener' ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
+          border: optionsSubTab === 'screener' ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid #475569',
+          borderRadius: '0.5rem',
+          color: optionsSubTab === 'screener' ? '#93c5fd' : '#94a3b8',
+          cursor: 'pointer',
+          fontSize: '0.875rem',
+          fontWeight: '600',
+          whiteSpace: 'nowrap',
+          flexShrink: 0,
+          transition: 'all 0.2s'
+        }}
+        onMouseEnter={(e) => optionsSubTab !== 'screener' && (e.currentTarget.style.background = 'rgba(75, 85, 99, 0.3)')}
+        onMouseLeave={(e) => optionsSubTab !== 'screener' && (e.currentTarget.style.background = 'transparent')}
+      >
+        🔍 Screener
+      </button>
+      {/* ⬆️ SCREENER BUTTON ENDS HERE */}
       <button
         onClick={() => setOptionsSubTab('strategy')}
         style={{
@@ -967,65 +992,109 @@ useEffect(() => {
       </button>
     </div>
 
-    {/* Options Content */}
-    {!selectedStock ? (
-      <div style={{ 
-        padding: '3rem', 
-        textAlign: 'center',
-        background: 'rgba(30, 41, 59, 0.5)',
-        borderRadius: '0.75rem',
-        border: '1px solid #334155'
-      }}>
-        <Activity size={48} color="#94a3b8" style={{ margin: '0 auto 1rem' }} />
-        <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#e2e8f0' }}>
-          Select a Stock for Options Analysis
-        </h3>
-        <p style={{ color: '#94a3b8', marginBottom: '1rem' }}>
-          Use the search bar above to find a stock with options data
-        </p>
-        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-          {['AAPL', 'TSLA', 'SPY', 'NVDA', 'AMZN', 'GOOGL'].map(symbol => (
-            <button
-              key={symbol}
-              onClick={() => {
-                setSelectedStock(symbol);
-                fetchStockData(symbol);
-              }}
-              style={{
-                padding: '0.5rem 1rem',
-                background: 'rgba(139, 92, 246, 0.2)',
-                border: '1px solid rgba(139, 92, 246, 0.3)',
-                borderRadius: '0.5rem',
-                color: '#c4b5fd',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-                fontWeight: '600',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(139, 92, 246, 0.3)'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(139, 92, 246, 0.2)'}
-            >
-              {symbol}
-            </button>
-          ))}
+{/* Options Content */}
+    <>
+      {optionsSubTab === 'chain' && !selectedStock && (
+        <div style={{ 
+          padding: '3rem', 
+          textAlign: 'center',
+          background: 'rgba(30, 41, 59, 0.5)',
+          borderRadius: '0.75rem',
+          border: '1px solid #334155'
+        }}>
+          <Activity size={48} color="#94a3b8" style={{ margin: '0 auto 1rem' }} />
+          <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#e2e8f0' }}>
+            Select a Stock for Options Analysis
+          </h3>
+          <p style={{ color: '#94a3b8', marginBottom: '1rem' }}>
+            Use the search bar above to find a stock with options data
+          </p>
+          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            {['AAPL', 'TSLA', 'SPY', 'NVDA', 'AMZN', 'GOOGL'].map(symbol => (
+              <button
+                key={symbol}
+                onClick={() => {
+                  setSelectedStock(symbol);
+                  fetchStockData(symbol);
+                }}
+                style={{
+                  padding: '0.5rem 1rem',
+                  background: 'rgba(139, 92, 246, 0.2)',
+                  border: '1px solid rgba(139, 92, 246, 0.3)',
+                  borderRadius: '0.5rem',
+                  color: '#c4b5fd',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(139, 92, 246, 0.3)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(139, 92, 246, 0.2)'}
+              >
+                {symbol}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
-    ) : (
-      <>
-        {optionsSubTab === 'chain' && (
-          <OptionsChainExplorer 
-            symbol={selectedStock}
-            underlyingPrice={stockData?.currentPrice || stockData?.CurrentPrice || 0}
-          />
-        )}
-        {optionsSubTab === 'strategy' && (
-          <OptionsStrategyBuilder 
-            symbol={selectedStock}
-            underlyingPrice={stockData?.currentPrice || stockData?.CurrentPrice || 0}
-          />
-        )}
-      </>
-    )}
+      )}
+
+      {optionsSubTab === 'chain' && selectedStock && (
+        <OptionsChainExplorer 
+          symbol={selectedStock}
+          underlyingPrice={stockData?.currentPrice || stockData?.CurrentPrice || 0}
+        />
+      )}
+
+      {optionsSubTab === 'screener' && (
+        <OptionsScreener 
+          onAddToBuilder={(option) => {
+            setOptionsSubTab('strategy');
+            setSelectedStock(option.symbol);
+            fetchStockData(option.symbol);
+          }}
+        />
+      )}
+
+      {optionsSubTab === 'strategy' && !selectedStock && (
+        <div style={{ 
+          padding: '3rem', 
+          textAlign: 'center',
+          background: 'rgba(30, 41, 59, 0.5)',
+          borderRadius: '0.75rem',
+          border: '1px solid #334155'
+        }}>
+          <Calculator size={48} color="#94a3b8" style={{ margin: '0 auto 1rem' }} />
+          <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#e2e8f0' }}>
+            Select a Stock to Build Strategy
+          </h3>
+          <p style={{ color: '#94a3b8', marginBottom: '1rem' }}>
+            Use the search bar or screener to find options
+          </p>
+          <button
+            onClick={() => setOptionsSubTab('screener')}
+            style={{
+              padding: '0.75rem 1.5rem',
+              background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+              border: 'none',
+              borderRadius: '0.5rem',
+              color: 'white',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              fontWeight: '600'
+            }}
+          >
+            Go to Screener
+          </button>
+        </div>
+      )}
+
+      {optionsSubTab === 'strategy' && selectedStock && (
+        <OptionsStrategyBuilder 
+          symbol={selectedStock}
+          underlyingPrice={stockData?.currentPrice || stockData?.CurrentPrice || 0}
+        />
+      )}
+    </>
   </div>
 )}
 
